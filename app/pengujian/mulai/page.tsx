@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import html2canvas from "html2canvas";
 import { toJpeg } from 'html-to-image';
 
-
 const LIST_KATA = ["Air", "Anak", "Apa", "Bagaimana", "Bangun", "Besok", "Bicara", "Bisa", "Cepat", "Datang"];
 
-export default function MulaiPengujianPage() {
+// 1. Buat komponen utama yang berisi seluruh logika halaman Anda
+function MulaiPengujianContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -375,5 +375,18 @@ export default function MulaiPengujianPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+// 2. Ekspor komponen utama yang dibungkus dengan Suspense secara default
+export default function MulaiPengujianPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex items-center justify-center min-h-screen text-emerald-800 font-semibold">
+                Memuat Halaman Pengujian...
+            </div>
+        }>
+            <MulaiPengujianContent />
+        </Suspense>
     );
 }
