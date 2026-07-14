@@ -354,7 +354,7 @@ function MulaiPengujianContent() {
                             {isStarted && LIST_KATA[currentIndex] ? (
                                 <video
                                     key={LIST_KATA[currentIndex]}
-                                    src={`/video/kata/${currentWordLower}1.mp4`}
+                                    src={`/video/Kata/${currentWordLower}1.mp4`}
                                     autoPlay
                                     loop
                                     muted // Tetap biarkan untuk HTML fallback
