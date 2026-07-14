@@ -24,3 +24,11 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Letakkan di bagian paling bawah file globals.css Anda */
+#googleBtn, 
+#googleBtn > div, 
+#googleBtn iframe {
+  width: 100% !important;
+  max-width: 100% !important;
+}
