@@ -9,6 +9,7 @@ import {
   Sparkles,
   BookOpen,
   HelpCircle,
+  FlaskConical,
   Info,
   User,
   LogIn,
@@ -28,7 +29,7 @@ export default function RootLayout({
   const router = useRouter();
 
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [userSession, setUserSession] = useState<{ username: string } | null>(null);
+  const [userSession, setUserSession] = useState<{ id?: number; username?: string; email: string } | null>(null);
 
   const isAuthPage = pathname === "/login" || pathname === "/register";
 
@@ -53,6 +54,7 @@ export default function RootLayout({
     { name: "About", href: "/", icon: Info },
     { name: "Dictionary", href: "/dictionary", icon: BookOpen },
     { name: "Quizz", href: "/quizz", icon: HelpCircle },
+    { name: "Testing", href: "/pengujian", icon: FlaskConical },
   ];
 
   const SidebarContent = () => (
@@ -77,8 +79,8 @@ export default function RootLayout({
               href={item.href}
               onClick={() => setIsMobileOpen(false)}
               className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group ${isActive
-                  ? "bg-white text-emerald-900 font-bold shadow-md border-l-4 border-emerald-500 transform scale-[1.02]"
-                  : "text-emerald-100 hover:bg-emerald-700/50 hover:text-white"
+                ? "bg-white text-emerald-900 font-bold shadow-md border-l-4 border-emerald-500 transform scale-[1.02]"
+                : "text-emerald-100 hover:bg-emerald-700/50 hover:text-white"
                 }`}
             >
               <Icon
@@ -101,7 +103,9 @@ export default function RootLayout({
               </div>
               <div className="overflow-hidden">
                 <p className="text-xs text-emerald-300 font-medium">Signed in as</p>
-                <p className="text-sm font-semibold text-white truncate">{userSession.username}</p>
+                <p className="text-sm font-semibold text-white truncate">
+                  {userSession.username || userSession.email}
+                </p>
               </div>
             </div>
             <button
@@ -117,8 +121,8 @@ export default function RootLayout({
             href="/login"
             onClick={() => setIsMobileOpen(false)}
             className={`flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all ${pathname === "/login"
-                ? "bg-white text-emerald-900 font-bold shadow-md"
-                : "text-emerald-100 hover:bg-emerald-700/50 hover:text-white"
+              ? "bg-white text-emerald-900 font-bold shadow-md"
+              : "text-emerald-100 hover:bg-emerald-700/50 hover:text-white"
               }`}
           >
             <LogIn size={22} />
@@ -175,14 +179,13 @@ export default function RootLayout({
               )}
 
               {/* MAIN CONTAINER KONTEN */}
-              {/* PERUBAHAN: Latar dasar menggunakan gradasi hijau cerah yang solid */}
               <main className="flex-1 overflow-y-auto bg-gradient-to-br from-slate-50 via-green-100 to-emerald-100 relative">
 
                 {/* Ornamen lingkaran dekoratif di belakang kaca */}
                 <div className="absolute top-0 right-0 -z-10 w-80 h-80 bg-emerald-300 rounded-full blur-3xl opacity-60 pointer-events-none" />
                 <div className="absolute bottom-10 left-10 -z-10 w-96 h-96 bg-green-300 rounded-full blur-3xl opacity-50 pointer-events-none" />
 
-                {/* PERUBAHAN UTAMA: Lapisan Backdrop Blur Putih (Glassmorphism) yang membungkus konten */}
+                {/* Lapisan Backdrop Blur Putih (Glassmorphism) yang membungkus konten */}
                 <div className="min-h-full w-full bg-white/75 backdrop-blur-md p-4 md:p-8">
                   <div className="max-w-7xl mx-auto">
                     {children}
