@@ -367,10 +367,24 @@ function MulaiPengujianContent() {
                                 />
                             ) : null}
                         </div>
+                        <video
+                            key={LIST_KATA[currentIndex]}
+                            src={`/video/kata/air1.mp4`}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                                const target = e.target as HTMLVideoElement;
+                                target.style.display = "none";
+                            }}
+                        />
                     </div>
                 </div>
             </div>
         </div>
+
     );
 }
 
