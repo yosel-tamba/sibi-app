@@ -291,7 +291,6 @@ function MulaiPengujianContent() {
                                     <ul className="text-xs text-slate-600 text-left space-y-2 list-disc list-inside mb-4">
                                         <li>Setelah menekan tombol <strong>Mulai Pengujian</strong>, sistem langsung berjalan.</li>
                                         <li>Setiap kata memiliki durasi waktu <strong>5 detik</strong> sebelum otomatis berpindah.</li>
-                                        <li>Sistem akan otomatis mengambil tangkapan layar penuh & menyimpan data ke server Flask di akhir hitungan mundur.</li>
                                         <li>Pastikan Anda fokus memperagakan gerakan isyarat sesuai instruksi.</li>
                                     </ul>
                                     <button
@@ -367,9 +366,6 @@ function MulaiPengujianContent() {
                                     }}
                                 />
                             ) : null}
-                            <div className="absolute text-center p-4 text-xs text-slate-400 bg-slate-50/80 inset-0 flex items-center justify-center pointer-events-none">
-                                {!isStarted ? "Panduan gerakan akan muncul saat pengujian dimulai" : `Video isyarat SIBI: "${LIST_KATA[currentIndex]}"`}
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -378,7 +374,6 @@ function MulaiPengujianContent() {
     );
 }
 
-// 2. Ekspor komponen utama yang dibungkus dengan Suspense secara default
 export default function MulaiPengujianPage() {
     return (
         <Suspense fallback={

@@ -12,7 +12,7 @@ export default function RegisterPage() {
     const router = useRouter();
 
     const flaskUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-    
+
     useEffect(() => {
         const script = document.createElement("script");
         script.src = "https://accounts.google.com/gsi/client";
@@ -39,7 +39,7 @@ export default function RegisterPage() {
         try {
             const res = await fetch(`${flaskUrl}/register-google`, {
                 method: "POST",
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
                     "ngrok-skip-browser-warning": "any-value"
                 },
@@ -90,7 +90,7 @@ export default function RegisterPage() {
         try {
             const response = await fetch(`${flaskUrl}/register`, {
                 method: "POST",
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
                     "ngrok-skip-browser-warning": "any-value"
                 },
@@ -129,7 +129,7 @@ export default function RegisterPage() {
         <main className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50/20 to-emerald-50/40 flex items-center justify-center px-6 py-12 relative overflow-hidden">
             <div className="absolute top-0 right-0 -z-10 w-72 h-72 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute bottom-10 left-10 -z-10 w-96 h-96 bg-green-300/10 rounded-full blur-3xl pointer-events-none" />
-            
+
             <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-emerald-100 p-8 relative z-10">
                 <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-emerald-800 to-emerald-950 bg-clip-text text-transparent">
                     Create Account
@@ -137,7 +137,9 @@ export default function RegisterPage() {
                 <p className="text-center text-slate-600 mt-2 text-sm">Mulai belajar bahasa isyarat</p>
 
                 <div className="mt-6">
-                    <div id="googleBtn"></div>
+                    <div className="flex justify-center items-center">
+                        <div id="googleBtn"></div>
+                    </div>
                 </div>
 
                 <div className="relative flex py-5 items-center">
@@ -180,11 +182,11 @@ export default function RegisterPage() {
                             required
                         />
                     </div>
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         className="w-full bg-gradient-to-r from-emerald-800 to-emerald-900 text-white py-3 rounded-xl hover:from-emerald-700 hover:to-emerald-800 transition duration-200 font-medium shadow-md shadow-emerald-900/10 tracking-wide cursor-pointer"
                     >
-                        Register Manual
+                        Register
                     </button>
                 </form>
 

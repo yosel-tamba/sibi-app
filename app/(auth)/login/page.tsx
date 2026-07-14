@@ -147,18 +147,8 @@ export default function LoginPage() {
         </p>
 
         <div className="mt-6">
-          {/* Div pembungkus utama */}
-          <div className="w-full flex justify-center items-center">
-            <div
-              id="googleBtn"
-              className="g_id_signin"
-              data-type="standard"
-              data-shape="rectangular"
-              data-theme="outline"
-              data-size="large"
-              data-logo_alignment="left"
-              data-width="100%" /* Atribut data-width di HTML lebih stabil membaca 100% */
-            ></div>
+          <div className="flex justify-center items-center">
+            <div id="googleBtn"></div>
           </div>
         </div>
 
