@@ -295,7 +295,7 @@ function MulaiPengujianContent() {
                                     </ul>
                                     <button
                                         onClick={handleStartTest}
-                                        className="w-full bg-gradient-to-r from-emerald-800 to-emerald-900 text-white py-2.5 rounded-xl text-sm font-medium hover:from-emerald-700 hover:to-emerald-800 transition shadow-md shadow-emerald-950/20"
+                                        className="w-full bg-gradient-to-r from-emerald-800 to-emerald-900 text-white py-2.5 rounded-xl text-sm font-medium hover:from-emerald-700 hover:to-emerald-800 transition shadow-md shadow-emerald-950/20 cursor-pointer"
                                     >
                                         Mulai Pengujian Sekarang
                                     </button>
