@@ -38,9 +38,9 @@ export default function LoginPage() {
     try {
       const res = await fetch(`${flaskUrl}/register-google`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          "ngrok-skip-browser-warning": "any-value" 
+          "ngrok-skip-browser-warning": "any-value"
         },
         body: JSON.stringify({ token: response.credential }),
       });
@@ -135,7 +135,7 @@ export default function LoginPage() {
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50/20 to-emerald-50/40 flex items-center justify-center px-6 py-12 relative overflow-hidden">
       <div className="absolute top-0 right-0 -z-10 w-72 h-72 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 left-10 -z-10 w-96 h-96 bg-green-300/10 rounded-full blur-3xl pointer-events-none" />
-      
+
       <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-emerald-100 p-8 relative z-10">
 
         <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-emerald-800 to-emerald-950 bg-clip-text text-transparent">
@@ -147,7 +147,19 @@ export default function LoginPage() {
         </p>
 
         <div className="mt-6">
-          <div id="googleBtn"></div>
+          {/* Div pembungkus utama */}
+          <div className="w-full">
+            <div
+              id="googleBtn"
+              className="g_id_signin"
+              data-type="standard"
+              data-shape="rectangular"
+              data-theme="outline"
+              data-size="large"
+              data-logo_alignment="left"
+              data-width="100%" /* Atribut data-width di HTML lebih stabil membaca 100% */
+            ></div>
+          </div>
         </div>
 
         <div className="relative flex py-5 items-center">
