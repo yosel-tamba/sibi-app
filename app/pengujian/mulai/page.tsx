@@ -350,36 +350,30 @@ function MulaiPengujianContent() {
                         <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-3">
                             Panduan Gerakan Isyarat
                         </span>
-                        <div className="aspect-video bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center overflow-hidden relative">
+                        <div className="bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center overflow-hidden relative">
                             {isStarted && LIST_KATA[currentIndex] ? (
                                 <video
                                     key={LIST_KATA[currentIndex]}
                                     src={`/video/kata/${currentWordLower}1.mp4`}
                                     autoPlay
                                     loop
-                                    muted
+                                    muted // Tetap biarkan untuk HTML fallback
                                     playsInline
                                     className="w-full h-full object-cover"
+                                    ref={(el) => {
+                                        if (el) {
+                                            el.muted = true; // Paksa mute via JavaScript agar autoplay diizinkan browser di Vercel
+                                        }
+                                    }}
                                     onError={(e) => {
                                         const target = e.target as HTMLVideoElement;
                                         target.style.display = "none";
+                                        console.error("Gagal memuat video:", target.src); // Deteksi URL mana yang gagal dimuat lewat inspect console
                                     }}
                                 />
                             ) : null}
                         </div>
-                        <video
-                            key={LIST_KATA[currentIndex]}
-                            src={`/video/kata/air1.mp4`}
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                                const target = e.target as HTMLVideoElement;
-                                target.style.display = "none";
-                            }}
-                        />
+
                     </div>
                 </div>
             </div>
