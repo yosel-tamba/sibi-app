@@ -94,7 +94,67 @@ function MulaiPengujianContent() {
     const stopIntervals = () => {
         if (countdownRef.current) clearInterval(countdownRef.current);
     };
+    useEffect(() => {
+        let intervalId: NodeJS.Timeout;
 
+        const runPrediction = async () => {
+            // 1. Validasi awal: pastikan video siap dan flaskUrl sudah didefinisikan
+            if (!videoRef.current || videoRef.current.paused || videoRef.current.ended || !flaskUrl) return;
+
+            try {
+                const canvas = document.createElement("canvas");
+                canvas.width = videoRef.current.videoWidth || 640;
+                canvas.height = videoRef.current.videoHeight || 480;
+                const ctx = canvas.getContext("2d");
+
+                if (ctx) {
+                    ctx.translate(canvas.width, 0);
+                    ctx.scale(-1, 1);
+                    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+
+                    canvas.toBlob(async (blob) => {
+                        if (!blob) return;
+
+                        const formData = new FormData();
+                        formData.append("file", blob, "predict.jpg");
+
+                        // TRY CATCH HARUS DI DALAM SINI (DI DALAM CALLBACK)
+                        try {
+                            const response = await fetch(`${flaskUrl}/predict`, {
+                                method: "POST",
+                                headers: {
+                                    "ngrok-skip-browser-warning": "any-value",
+                                },
+                                body: formData,
+                            });
+
+                            if (response.ok) {
+                                const data = await response.json();
+                                setPredictedWord(data.class || "-");
+                                setConfidence(data.confidence || 0);
+                            } else {
+                                console.warn("Server merespon dengan status:", response.status);
+                            }
+                        } catch (fetchError) {
+                            // Menangkap error jika server Flask / ngrok mati/terputus
+                            console.error("Koneksi ke Flask API terputus atau gagal:", fetchError);
+                        }
+                    }, "image/jpeg", 0.8);
+                }
+            } catch (error) {
+                console.error("Gagal memproses frame kamera:", error);
+            }
+        };
+
+        if (isStarted) {
+            intervalId = setInterval(runPrediction, 1000);
+        }
+
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [isStarted, flaskUrl]);
+    
     const captureAndSend = async (currentWord: string) => {
         const targetElement = document.body;
         if (!targetElement) return;
@@ -133,8 +193,6 @@ function MulaiPengujianContent() {
             // 2. JALANKAN SCREENSHOT HALAMAN
             const dataUrl = await toJpeg(targetElement, {
                 quality: 0.85,
-                // Sekarang kita hanya menyembunyikan tag <video>, 
-                // tetapi tampilan kamera tetap ada karena digantikan oleh tempCanvas di atas!
                 filter: (node) => {
                     return (node as HTMLElement).tagName !== 'VIDEO';
                 }
@@ -155,7 +213,7 @@ function MulaiPengujianContent() {
             formData.append("kondisi", kondisi);
             formData.append("jarak", jarak);
 
-            const response = await fetch(`${flaskUrl}/predict-pengujian`, {
+            const response = await fetch(`${flaskUrl}/save-pengujian`, {
                 method: "POST",
                 headers: {
                     "ngrok-skip-browser-warning": "any-value",
@@ -367,7 +425,7 @@ function MulaiPengujianContent() {
                                 />
                             ) : null}
                         </div>
-                        
+
                     </div>
                 </div>
             </div>
