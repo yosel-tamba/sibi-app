@@ -357,23 +357,17 @@ function MulaiPengujianContent() {
                                     src={`/video/Kata/${currentWordLower}1.mp4`}
                                     autoPlay
                                     loop
-                                    muted // Tetap biarkan untuk HTML fallback
+                                    muted
                                     playsInline
                                     className="w-full h-full object-cover"
-                                    ref={(el) => {
-                                        if (el) {
-                                            el.muted = true; // Paksa mute via JavaScript agar autoplay diizinkan browser di Vercel
-                                        }
-                                    }}
                                     onError={(e) => {
                                         const target = e.target as HTMLVideoElement;
                                         target.style.display = "none";
-                                        console.error("Gagal memuat video:", target.src); // Deteksi URL mana yang gagal dimuat lewat inspect console
                                     }}
                                 />
                             ) : null}
                         </div>
-
+                        
                     </div>
                 </div>
             </div>
