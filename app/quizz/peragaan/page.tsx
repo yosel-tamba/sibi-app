@@ -27,22 +27,24 @@ export default function PeragaanQuizzPage() {
   const [confidence, setConfidence] = useState<number | null>(null);
   const [isMatched, setIsMatched] = useState(false);
 
+  // Buffer state untuk mengidentifikasi gerakan yang membutuhkan penggabungan suku kata/partisi
+  const [variabel1, setVariabel1] = useState<string | null>(null);
+  const [variabel2, setVariabel2] = useState<string | null>(null);
+
   // State Manajemen Kuis & Timer
   const [timeLeft, setTimeLeft] = useState(600);
   const [riwayat, setRiwayat] = useState<RekapKuis[]>([]);
 
   const flaskUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-  // 1. Ganti dummy USER_ID menjadi state dinamis
+  // Ambil ID dari localStorage saat halaman di-load
   const [userId, setUserId] = useState<number | null>(null);
 
-  // 2. Ambil ID dari localStorage saat halaman di-load
   useEffect(() => {
     const activeUser = localStorage.getItem("user");
     if (activeUser) {
       try {
         const parsedUser = JSON.parse(activeUser);
-        // Pastikan backend Anda mengirim properti 'id' di dalam objek user
         if (parsedUser.id) {
           setUserId(Number(parsedUser.id));
         }
@@ -88,6 +90,11 @@ export default function PeragaanQuizzPage() {
   useEffect(() => {
     if (soalList.length > 0 && riwayat.length > 0) {
       const currentSave = riwayat[currentIndex];
+      
+      // Reset buffer variabel sementara ketika berganti soal
+      setVariabel1(null);
+      setVariabel2(null);
+
       if (currentSave && currentSave.jawaban_user !== "-") {
         setPrediction(currentSave.jawaban_user);
         setIsMatched(currentSave.isCorrect);
@@ -232,14 +239,13 @@ export default function PeragaanQuizzPage() {
       updatedRiwayat[currentIndex] = {
         peragaan_id: currentSoal.id,
         keyword: currentSoal.keyword,
-        jawaban_user: "-", // Diubah dari "Dilewati" menjadi "-"
+        jawaban_user: "-", 
         isCorrect: false
       };
     } else {
       updatedRiwayat[currentIndex] = {
         peragaan_id: currentSoal.id,
         keyword: currentSoal.keyword,
-        // KUNCI: Jika jawaban cocok/benar gunakan keyword, jika salah/belum terdeteksi paksa menjadi "-"
         jawaban_user: isMatched ? currentSoal.keyword : "-",
         isCorrect: isMatched
       };
@@ -269,6 +275,8 @@ export default function PeragaanQuizzPage() {
     setIsMatched(false);
     setPrediction("Menunggu gerakan...");
     setConfidence(null);
+    setVariabel1(null);
+    setVariabel2(null);
 
     fetch(`${flaskUrl}/quizz/peragaan?limit=10`, {
       headers: {
@@ -324,22 +332,75 @@ export default function PeragaanQuizzPage() {
         const data = await response.json();
 
         if (data.class) {
-          setPrediction(data.class);
+          const detectedClass = data.class;
           setConfidence(data.confidence);
 
-          if (data.class.toLowerCase() === soalList[currentIndex]?.keyword.toLowerCase()) {
-            setIsMatched(true);
+          // Gunakan Regular Expression untuk mengecek akhiran angka 1, 2, atau 3 (untuk Cepat3)
+          const endsWithNumberMatch = detectedClass.match(/^(.*?)([1-3])$/);
 
-            setRiwayat((prev) => {
-              const newRiwayat = [...prev];
-              newRiwayat[currentIndex] = {
-                peragaan_id: soalList[currentIndex].id,
-                keyword: soalList[currentIndex].keyword,
-                jawaban_user: soalList[currentIndex].keyword,
-                isCorrect: true
-              };
-              return newRiwayat;
-            });
+          if (endsWithNumberMatch) {
+            const wordBase = endsWithNumberMatch[1]; // Suku kata dasar (misal: "Apa" dari "Apa1")
+            const numberSuffix = endsWithNumberMatch[2]; // Angka akhiran ("1", "2", atau "3")
+
+            let currentV1 = variabel1;
+            let currentV2 = variabel2;
+
+            if (numberSuffix === "1") {
+              setVariabel1(wordBase);
+              currentV1 = wordBase;
+            } else if (numberSuffix === "2" || numberSuffix === "3") {
+              setVariabel2(wordBase);
+              currentV2 = wordBase;
+            }
+
+            // Jika kedua variabel sementara sudah terisi dan memiliki kata dasar yang cocok/sama
+            if (currentV1 && currentV2 && currentV1.toLowerCase() === currentV2.toLowerCase()) {
+              const finalMergedWord = currentV1; // Kata gabungan bersih tanpa angka (misal: "Apa")
+
+              setPrediction(finalMergedWord);
+
+              // Reset buffer penampung
+              setVariabel1(null);
+              setVariabel2(null);
+
+              // Validasi kecocokan dengan keyword soal
+              if (finalMergedWord.toLowerCase() === soalList[currentIndex]?.keyword.toLowerCase()) {
+                setIsMatched(true);
+
+                setRiwayat((prev) => {
+                  const newRiwayat = [...prev];
+                  newRiwayat[currentIndex] = {
+                    peragaan_id: soalList[currentIndex].id,
+                    keyword: soalList[currentIndex].keyword,
+                    jawaban_user: soalList[currentIndex].keyword,
+                    isCorrect: true
+                  };
+                  return newRiwayat;
+                });
+              }
+            }
+          } else {
+            // Jika kelas murni kata dasar yang tidak diakhiri angka (misal: "Saya", "Makan")
+            setPrediction(detectedClass);
+            
+            // Set variabel penampung kembali ke null karena gerakan non-angka bersifat mandiri
+            setVariabel1(null);
+            setVariabel2(null);
+
+            if (detectedClass.toLowerCase() === soalList[currentIndex]?.keyword.toLowerCase()) {
+              setIsMatched(true);
+
+              setRiwayat((prev) => {
+                const newRiwayat = [...prev];
+                newRiwayat[currentIndex] = {
+                  peragaan_id: soalList[currentIndex].id,
+                  keyword: soalList[currentIndex].keyword,
+                  jawaban_user: soalList[currentIndex].keyword,
+                  isCorrect: true
+                };
+                return newRiwayat;
+              });
+            }
           }
         }
       } catch (err) {
@@ -596,7 +657,8 @@ export default function PeragaanQuizzPage() {
             ) : (
               <button
                 onClick={() => handleNextQuestion(false)}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all shadow-lg hover:shadow-blue-500/20 cursor-pointer"
+                disabled={!isMatched}
+                className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all shadow-lg hover:shadow-blue-500/20 cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none disabled:cursor-not-allowed"
               >
                 Selesai & Simpan
                 <CheckCircle2 size={18} />

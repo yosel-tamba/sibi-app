@@ -27,6 +27,10 @@ function MulaiPengujianContent() {
     const [predictedWord, setPredictedWord] = useState<string>("-");
     const [confidence, setConfidence] = useState<number>(0);
 
+    // Buffer state untuk mengidentifikasi gerakan yang membutuhkan penggabungan suku kata/partisi
+    const [variabel1, setVariabel1] = useState<string | null>(null);
+    const [variabel2, setVariabel2] = useState<string | null>(null);
+
     // Web Ref
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
@@ -94,11 +98,19 @@ function MulaiPengujianContent() {
     const stopIntervals = () => {
         if (countdownRef.current) clearInterval(countdownRef.current);
     };
+
+    // Bersihkan buffer sementara setiap kali kata uji berubah
+    useEffect(() => {
+        setVariabel1(null);
+        setVariabel2(null);
+    }, [currentIndex]);
+
+    // Loop Prediksi Real-time (Setiap 1 Detik)
     useEffect(() => {
         let intervalId: NodeJS.Timeout;
 
         const runPrediction = async () => {
-            // 1. Validasi awal: pastikan video siap dan flaskUrl sudah didefinisikan
+            // Validasi awal: pastikan video siap dan flaskUrl sudah didefinisikan
             if (!videoRef.current || videoRef.current.paused || videoRef.current.ended || !flaskUrl) return;
 
             try {
@@ -118,7 +130,6 @@ function MulaiPengujianContent() {
                         const formData = new FormData();
                         formData.append("file", blob, "predict.jpg");
 
-                        // TRY CATCH HARUS DI DALAM SINI (DI DALAM CALLBACK)
                         try {
                             const response = await fetch(`${flaskUrl}/predict`, {
                                 method: "POST",
@@ -130,13 +141,49 @@ function MulaiPengujianContent() {
 
                             if (response.ok) {
                                 const data = await response.json();
-                                setPredictedWord(data.class || "-");
-                                setConfidence(data.confidence || 0);
+                                const rawClass = data.class || "-";
+                                const rawConfidence = data.confidence || 0;
+
+                                // Gunakan regex untuk memilah kata dasar dan akhiran angka (1-3)
+                                const endsWithNumberMatch = rawClass.match(/^(.*?)([1-3])$/);
+
+                                if (endsWithNumberMatch) {
+                                    const wordBase = endsWithNumberMatch[1]; // Suku kata murni (contoh: "Apa" dari "Apa1")
+                                    const numberSuffix = endsWithNumberMatch[2]; // Angka akhiran ("1", "2", atau "3")
+
+                                    let currentV1 = variabel1;
+                                    let currentV2 = variabel2;
+
+                                    if (numberSuffix === "1") {
+                                        setVariabel1(wordBase);
+                                        currentV1 = wordBase;
+                                    } else if (numberSuffix === "2" || numberSuffix === "3") {
+                                        setVariabel2(wordBase);
+                                        currentV2 = wordBase;
+                                    }
+
+                                    // Validasi kecocokan: Jika v1 dan v2 memiliki kata dasar yang sama
+                                    if (currentV1 && currentV2 && currentV1.toLowerCase() === currentV2.toLowerCase()) {
+                                        setPredictedWord(currentV1); // Tampilkan versi bersih (tanpa angka)
+                                        setConfidence(rawConfidence);
+
+                                        // Bersihkan buffer setelah berhasil berpasangan
+                                        setVariabel1(null);
+                                        setVariabel2(null);
+                                    }
+                                } else {
+                                    // Jika kelas mandiri tanpa akhiran angka (contoh: "Air", "Bicara")
+                                    setPredictedWord(rawClass);
+                                    setConfidence(rawConfidence);
+
+                                    // Timpa buffer menjadi null karena terpotong gerakan non-angka
+                                    setVariabel1(null);
+                                    setVariabel2(null);
+                                }
                             } else {
                                 console.warn("Server merespon dengan status:", response.status);
                             }
                         } catch (fetchError) {
-                            // Menangkap error jika server Flask / ngrok mati/terputus
                             console.error("Koneksi ke Flask API terputus atau gagal:", fetchError);
                         }
                     }, "image/jpeg", 0.8);
@@ -153,7 +200,7 @@ function MulaiPengujianContent() {
         return () => {
             if (intervalId) clearInterval(intervalId);
         };
-    }, [isStarted, flaskUrl]);
+    }, [isStarted, flaskUrl, variabel1, variabel2]);
     
     const captureAndSend = async (currentWord: string) => {
         const targetElement = document.body;
@@ -223,8 +270,38 @@ function MulaiPengujianContent() {
 
             if (response.ok) {
                 const data = await response.json();
-                setPredictedWord(data.class || "-");
-                setConfidence(data.confidence || 0);
+                const rawClass = data.class || "-";
+                const rawConfidence = data.confidence || 0;
+
+                // Terapkan logika penyaringan angka juga pada data response dari capture saving
+                const endsWithNumberMatch = rawClass.match(/^(.*?)([1-3])$/);
+                if (endsWithNumberMatch) {
+                    const wordBase = endsWithNumberMatch[1];
+                    const numberSuffix = endsWithNumberMatch[2];
+
+                    let currentV1 = variabel1;
+                    let currentV2 = variabel2;
+
+                    if (numberSuffix === "1") {
+                        setVariabel1(wordBase);
+                        currentV1 = wordBase;
+                    } else if (numberSuffix === "2" || numberSuffix === "3") {
+                        setVariabel2(wordBase);
+                        currentV2 = wordBase;
+                    }
+
+                    if (currentV1 && currentV2 && currentV1.toLowerCase() === currentV2.toLowerCase()) {
+                        setPredictedWord(currentV1);
+                        setConfidence(rawConfidence);
+                        setVariabel1(null);
+                        setVariabel2(null);
+                    }
+                } else {
+                    setPredictedWord(rawClass);
+                    setConfidence(rawConfidence);
+                    setVariabel1(null);
+                    setVariabel2(null);
+                }
             }
         } catch (error) {
             console.error("Gagal mengambil tangkapan layar penuh:", error);
@@ -242,6 +319,8 @@ function MulaiPengujianContent() {
         setCountdown(5);
         setPredictedWord("-");
         setConfidence(0);
+        setVariabel1(null);
+        setVariabel2(null);
 
         runTestStep(0);
     };
@@ -425,12 +504,10 @@ function MulaiPengujianContent() {
                                 />
                             ) : null}
                         </div>
-
                     </div>
                 </div>
             </div>
         </div>
-
     );
 }
 
