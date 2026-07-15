@@ -194,7 +194,7 @@ function MulaiPengujianContent() {
         };
 
         if (isStarted) {
-            intervalId = setInterval(runPrediction, 1000);
+            intervalId = setInterval(runPrediction, 500);
         }
 
         return () => {
