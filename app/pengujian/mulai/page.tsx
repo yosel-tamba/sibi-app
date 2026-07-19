@@ -6,7 +6,7 @@ import Swal from "sweetalert2";
 import html2canvas from "html2canvas";
 import { toJpeg } from 'html-to-image';
 
-const LIST_KATA = ["Air", "Anak", "Apa", "Bagaimana", "Bangun", "Besok", "Bicara", "Bisa", "Cepat", "Datang"];
+const LIST_KATA = ["Air", "Datang", "Dengar", "Jalan", "Kamu", "Kapan", "Kemarin", "Kita", "Main", "Mana"];
 
 // 1. Buat komponen utama yang berisi seluruh logika halaman Anda
 function MulaiPengujianContent() {
