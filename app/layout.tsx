@@ -54,7 +54,7 @@ export default function RootLayout({
     { name: "About", href: "/", icon: Info },
     { name: "Dictionary", href: "/dictionary", icon: BookOpen },
     { name: "Quizz", href: "/quizz", icon: HelpCircle },
-    { name: "Testing", href: "/pengujian", icon: FlaskConical },
+    // { name: "Testing", href: "/pengujian", icon: FlaskConical },
   ];
 
   const SidebarContent = () => (
