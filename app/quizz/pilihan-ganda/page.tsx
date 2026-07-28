@@ -424,8 +424,7 @@ export default function PilihanGandaQuizzPage() {
           {soalAktif?.video_url && (
             <div className="bg-slate-950 p-3 rounded-3xl overflow-hidden shadow-2xl border border-slate-800 flex items-center justify-center">
               <video
-                src={`${flaskUrl}/video${soalAktif.video_url}`}
-                
+                src={`/video${soalAktif.video_url}`}
                 autoPlay
                 controls
                 loop
