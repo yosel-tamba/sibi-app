@@ -190,7 +190,7 @@ export default function SusunKataQuizzPage() {
             const requests = finalRiwayat.map((item) => {
                 return fetch(`${flaskUrl}/quizz/save/susun-kata`, {
                     method: "POST",
-                    headers: { 
+                    headers: {
                         "Content-Type": "application/json",
                         "ngrok-skip-browser-warning": "any-value"
                     },
@@ -464,7 +464,7 @@ export default function SusunKataQuizzPage() {
                         soal.video_url.map((urlPath, index) => (
                             <div key={index} className="relative rounded-xl overflow-hidden border border-slate-800 bg-black flex items-center justify-center shadow-inner">
                                 <video
-                                    src={`/video${urlPath}`}
+                                    src={`/video${urlPath.replace(/^\/([a-z])/, (m, p1) => `/${p1.toUpperCase()}`)}`}
                                     autoPlay
                                     controls
                                     loop
