@@ -3,12 +3,10 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Swal from "sweetalert2";
-import html2canvas from "html2canvas";
-import { toJpeg } from 'html-to-image';
+import { toJpeg } from "html-to-image";
 
-const LIST_KATA = ["Air", "Datang", "Dengar", "Jalan", "Kamu", "Kapan", "Kemarin", "Kita", "Main", "Mana"];
+const LIST_KATA = ["Makan", "Marah", "A", "Minum", "Malam", "Besok", "Pagi", "Nama", "Y", "Jalan"];
 
-// 1. Buat komponen utama yang berisi seluruh logika halaman Anda
 function MulaiPengujianContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -21,34 +19,40 @@ function MulaiPengujianContent() {
     const [username, setUsername] = useState<string>("");
     const [isStarted, setIsStarted] = useState<boolean>(false);
     const [currentIndex, setCurrentIndex] = useState<number>(0);
-    const [countdown, setCountdown] = useState<number>(5);
+    const [countdown, setCountdown] = useState<number>(10);
+    const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
-    // State Hasil Prediksi Backend
-    const [predictedWord, setPredictedWord] = useState<string>("-");
-    const [confidence, setConfidence] = useState<number>(0);
-
-    // Buffer state untuk mengidentifikasi gerakan yang membutuhkan penggabungan suku kata/partisi
+    // Buffer state untuk penggabungan suku kata
     const [variabel1, setVariabel1] = useState<string | null>(null);
     const [variabel2, setVariabel2] = useState<string | null>(null);
+
+    // Ref untuk mengakses nilai terbaru di dalam interval
+    const isSuccessRef = useRef<boolean>(false);
+    const currentIndexRef = useRef<number>(0);
+    const isCapturingRef = useRef<boolean>(false);
 
     // Web Ref
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Ambil session user saat halaman di-load
+    // Keep refs synchronized
+    useEffect(() => {
+        isSuccessRef.current = isSuccess;
+    }, [isSuccess]);
+
+    useEffect(() => {
+        currentIndexRef.current = currentIndex;
+    }, [currentIndex]);
+
+    // Ambil session user
     useEffect(() => {
         const activeUser = localStorage.getItem("user");
         if (activeUser) {
             try {
                 const parsedUser = JSON.parse(activeUser);
-                if (parsedUser.username) {
-                    setUsername(parsedUser.username);
-                } else {
-                    setUsername("Anonymous");
-                }
+                setUsername(parsedUser.username || "Anonymous");
             } catch (e) {
-                console.error("Gagal membaca session user:", e);
                 setUsername("Anonymous");
             }
         } else {
@@ -63,7 +67,7 @@ function MulaiPengujianContent() {
         }
     }, [router]);
 
-    // Mengaktifkan Kamera otomatis
+    // Aktifkan Kamera
     useEffect(() => {
         async function enableCamera() {
             try {
@@ -76,12 +80,6 @@ function MulaiPengujianContent() {
                 }
             } catch (err) {
                 console.error("Gagal mengakses kamera:", err);
-                Swal.fire({
-                    title: "Kamera Tidak Ditemukan",
-                    text: "Pastikan Anda memberikan izin akses kamera perangkat ini.",
-                    icon: "error",
-                    confirmButtonColor: "#ef4444",
-                });
             }
         }
 
@@ -99,19 +97,141 @@ function MulaiPengujianContent() {
         if (countdownRef.current) clearInterval(countdownRef.current);
     };
 
-    // Bersihkan buffer sementara setiap kali kata uji berubah
-    useEffect(() => {
+    // Fungsi Tangkap Layar & Kirim ke Backend
+    const captureAndSend = async (currentWord: string, status: "berhasil" | "gagal") => {
+        if (isCapturingRef.current) return;
+        isCapturingRef.current = true;
+
+        const targetElement = document.body;
+        if (!targetElement) {
+            isCapturingRef.current = false;
+            return;
+        }
+
+        let tempCanvas: HTMLCanvasElement | null = null;
+        if (videoRef.current) {
+            tempCanvas = document.createElement("canvas");
+            tempCanvas.width = videoRef.current.videoWidth || 640;
+            tempCanvas.height = videoRef.current.videoHeight || 480;
+            const tempCtx = tempCanvas.getContext("2d");
+
+            if (tempCtx) {
+                tempCtx.translate(tempCanvas.width, 0);
+                tempCtx.scale(-1, 1);
+                tempCtx.drawImage(videoRef.current, 0, 0, tempCanvas.width, tempCanvas.height);
+                tempCtx.setTransform(1, 0, 0, 1, 0, 0);
+
+                tempCanvas.style.position = "absolute";
+                tempCanvas.style.top = "0";
+                tempCanvas.style.left = "0";
+                tempCanvas.style.width = "100%";
+                tempCanvas.style.height = "100%";
+                tempCanvas.style.objectFit = "cover";
+                tempCanvas.style.borderRadius = "inherit";
+                tempCanvas.id = "temp-camera-screenshot-canvas";
+
+                videoRef.current.parentElement?.appendChild(tempCanvas);
+            }
+        }
+
+        try {
+            const dataUrl = await toJpeg(targetElement, {
+                quality: 0.85,
+                filter: (node) => (node as HTMLElement).tagName !== "VIDEO",
+            });
+
+            if (tempCanvas && tempCanvas.parentNode) {
+                tempCanvas.parentNode.removeChild(tempCanvas);
+            }
+
+            const responseBlob = await fetch(dataUrl);
+            const blob = await responseBlob.blob();
+
+            const formData = new FormData();
+            formData.append("file", blob, "capture.jpg");
+            formData.append("username", username);
+            formData.append("kata_target", currentWord);
+            formData.append("kondisi", kondisi);
+            formData.append("jarak", jarak);
+            formData.append("status", status);
+
+            await fetch(`${flaskUrl}/save-pengujian`, {
+                method: "POST",
+                headers: {
+                    "ngrok-skip-browser-warning": "any-value",
+                },
+                body: formData,
+            });
+        } catch (error) {
+            console.error("Gagal mengambil tangkapan layar:", error);
+            const existingCanvas = document.getElementById("temp-camera-screenshot-canvas");
+            if (existingCanvas && existingCanvas.parentNode) {
+                existingCanvas.parentNode.removeChild(existingCanvas);
+            }
+        } finally {
+            isCapturingRef.current = false;
+        }
+    };
+
+    // Jalankan satu tahapan kata (10 detik)
+    const runTestStep = (index: number) => {
+        if (index >= LIST_KATA.length) {
+            stopIntervals();
+            setIsStarted(false);
+            Swal.fire({
+                title: "Pengujian Selesai!",
+                text: "Seluruh kata uji telah berhasil diperagakan dan direkam.",
+                icon: "success",
+                confirmButtonColor: "#10b981",
+            }).then(() => {
+                router.push("/pengujian");
+            });
+            return;
+        }
+
+        setIsSuccess(false);
+        isSuccessRef.current = false;
         setVariabel1(null);
         setVariabel2(null);
-    }, [currentIndex]);
 
-    // Loop Prediksi Real-time (Setiap 1 Detik)
+        let currentTimer = 10;
+        setCountdown(currentTimer);
+
+        stopIntervals();
+
+        countdownRef.current = setInterval(async () => {
+            // Jika sudah terdeteksi berhasil, tidak perlu hitung mundur lagi
+            if (isSuccessRef.current) return;
+
+            currentTimer -= 1;
+            setCountdown(currentTimer);
+
+            // Jika timer habis dan belum berhasil
+            if (currentTimer <= 0) {
+                stopIntervals();
+                const targetWord = LIST_KATA[index];
+                await captureAndSend(targetWord, "gagal");
+
+                const nextIndex = index + 1;
+                setCurrentIndex(nextIndex);
+                runTestStep(nextIndex);
+            }
+        }, 1000);
+    };
+
+    const handleStartTest = () => {
+        setIsStarted(true);
+        setCurrentIndex(0);
+        runTestStep(0);
+    };
+
+    // Loop Prediksi Real-time
     useEffect(() => {
         let intervalId: NodeJS.Timeout;
 
         const runPrediction = async () => {
-            // Validasi awal: pastikan video siap dan flaskUrl sudah didefinisikan
             if (!videoRef.current || videoRef.current.paused || videoRef.current.ended || !flaskUrl) return;
+            if (isSuccessRef.current || isCapturingRef.current) return;
 
             try {
                 const canvas = document.createElement("canvas");
@@ -125,7 +245,7 @@ function MulaiPengujianContent() {
                     ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
 
                     canvas.toBlob(async (blob) => {
-                        if (!blob) return;
+                        if (!blob || isSuccessRef.current) return;
 
                         const formData = new FormData();
                         formData.append("file", blob, "predict.jpg");
@@ -142,14 +262,14 @@ function MulaiPengujianContent() {
                             if (response.ok) {
                                 const data = await response.json();
                                 const rawClass = data.class || "-";
-                                const rawConfidence = data.confidence || 0;
+                                const targetWord = LIST_KATA[currentIndexRef.current];
 
-                                // Gunakan regex untuk memilah kata dasar dan akhiran angka (1-3)
+                                let detectedWord = "";
+
                                 const endsWithNumberMatch = rawClass.match(/^(.*?)([1-3])$/);
-
                                 if (endsWithNumberMatch) {
-                                    const wordBase = endsWithNumberMatch[1]; // Suku kata murni (contoh: "Apa" dari "Apa1")
-                                    const numberSuffix = endsWithNumberMatch[2]; // Angka akhiran ("1", "2", atau "3")
+                                    const wordBase = endsWithNumberMatch[1];
+                                    const numberSuffix = endsWithNumberMatch[2];
 
                                     let currentV1 = variabel1;
                                     let currentV2 = variabel2;
@@ -162,29 +282,36 @@ function MulaiPengujianContent() {
                                         currentV2 = wordBase;
                                     }
 
-                                    // Validasi kecocokan: Jika v1 dan v2 memiliki kata dasar yang sama
                                     if (currentV1 && currentV2 && currentV1.toLowerCase() === currentV2.toLowerCase()) {
-                                        setPredictedWord(currentV1); // Tampilkan versi bersih (tanpa angka)
-                                        setConfidence(rawConfidence);
-
-                                        // Bersihkan buffer setelah berhasil berpasangan
-                                        setVariabel1(null);
-                                        setVariabel2(null);
+                                        detectedWord = currentV1;
                                     }
                                 } else {
-                                    // Jika kelas mandiri tanpa akhiran angka (contoh: "Air", "Bicara")
-                                    setPredictedWord(rawClass);
-                                    setConfidence(rawConfidence);
-
-                                    // Timpa buffer menjadi null karena terpotong gerakan non-angka
-                                    setVariabel1(null);
-                                    setVariabel2(null);
+                                    detectedWord = rawClass;
                                 }
-                            } else {
-                                console.warn("Server merespon dengan status:", response.status);
+
+                                // Cek kesesuaian prediksi dengan kata target
+                                if (
+                                    detectedWord &&
+                                    targetWord &&
+                                    detectedWord.toLowerCase() === targetWord.toLowerCase()
+                                ) {
+                                    setIsSuccess(true);
+                                    isSuccessRef.current = true;
+                                    stopIntervals();
+
+                                    // Ambil tangkapan layar dengan status berhasil
+                                    await captureAndSend(targetWord, "berhasil");
+
+                                    // Jeda singkat agar warna hijau terlihat sebelum pindah
+                                    setTimeout(() => {
+                                        const nextIndex = currentIndexRef.current + 1;
+                                        setCurrentIndex(nextIndex);
+                                        runTestStep(nextIndex);
+                                    }, 1200);
+                                }
                             }
                         } catch (fetchError) {
-                            console.error("Koneksi ke Flask API terputus atau gagal:", fetchError);
+                            console.error("Koneksi ke Flask API terputus:", fetchError);
                         }
                     }, "image/jpeg", 0.8);
                 }
@@ -201,165 +328,6 @@ function MulaiPengujianContent() {
             if (intervalId) clearInterval(intervalId);
         };
     }, [isStarted, flaskUrl, variabel1, variabel2]);
-    
-    const captureAndSend = async (currentWord: string) => {
-        const targetElement = document.body;
-        if (!targetElement) return;
-
-        // 1. BUAT KANVAS SEMENTARA UNTUK MENANGKAP GAMBAR DARI VIDEO KAMERA AKTIF
-        let tempCanvas: HTMLCanvasElement | null = null;
-        if (videoRef.current) {
-            tempCanvas = document.createElement("canvas");
-            tempCanvas.width = videoRef.current.videoWidth || 640;
-            tempCanvas.height = videoRef.current.videoHeight || 480;
-            const tempCtx = tempCanvas.getContext("2d");
-
-            if (tempCtx) {
-                // Gambar frame video saat ini ke kanvas kustom
-                // scale-x-[-1] diaplikasikan di sini agar hasil screenshot kameranya mirror/sesuai tampilan di layar
-                tempCtx.translate(tempCanvas.width, 0);
-                tempCtx.scale(-1, 1);
-                tempCtx.drawImage(videoRef.current, 0, 0, tempCanvas.width, tempCanvas.height);
-                tempCtx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
-
-                // Masukkan kanvas sementara ini ke dalam DOM tepat di samping video agar bisa ikut terscan
-                tempCanvas.style.position = "absolute";
-                tempCanvas.style.top = "0";
-                tempCanvas.style.left = "0";
-                tempCanvas.style.width = "100%";
-                tempCanvas.style.height = "100%";
-                tempCanvas.style.objectFit = "cover";
-                tempCanvas.style.borderRadius = "inherit";
-                tempCanvas.id = "temp-camera-screenshot-canvas";
-
-                videoRef.current.parentElement?.appendChild(tempCanvas);
-            }
-        }
-
-        try {
-            // 2. JALANKAN SCREENSHOT HALAMAN
-            const dataUrl = await toJpeg(targetElement, {
-                quality: 0.85,
-                filter: (node) => {
-                    return (node as HTMLElement).tagName !== 'VIDEO';
-                }
-            });
-
-            // Hapus kanvas sementara setelah screenshot selesai diambil agar tidak mengganggu live stream kamera
-            if (tempCanvas && tempCanvas.parentNode) {
-                tempCanvas.parentNode.removeChild(tempCanvas);
-            }
-
-            const responseBlob = await fetch(dataUrl);
-            const blob = await responseBlob.blob();
-
-            const formData = new FormData();
-            formData.append("file", blob, "capture.jpg");
-            formData.append("username", username);
-            formData.append("kata_target", currentWord);
-            formData.append("kondisi", kondisi);
-            formData.append("jarak", jarak);
-
-            const response = await fetch(`${flaskUrl}/save-pengujian`, {
-                method: "POST",
-                headers: {
-                    "ngrok-skip-browser-warning": "any-value",
-                },
-                body: formData,
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                const rawClass = data.class || "-";
-                const rawConfidence = data.confidence || 0;
-
-                // Terapkan logika penyaringan angka juga pada data response dari capture saving
-                const endsWithNumberMatch = rawClass.match(/^(.*?)([1-3])$/);
-                if (endsWithNumberMatch) {
-                    const wordBase = endsWithNumberMatch[1];
-                    const numberSuffix = endsWithNumberMatch[2];
-
-                    let currentV1 = variabel1;
-                    let currentV2 = variabel2;
-
-                    if (numberSuffix === "1") {
-                        setVariabel1(wordBase);
-                        currentV1 = wordBase;
-                    } else if (numberSuffix === "2" || numberSuffix === "3") {
-                        setVariabel2(wordBase);
-                        currentV2 = wordBase;
-                    }
-
-                    if (currentV1 && currentV2 && currentV1.toLowerCase() === currentV2.toLowerCase()) {
-                        setPredictedWord(currentV1);
-                        setConfidence(rawConfidence);
-                        setVariabel1(null);
-                        setVariabel2(null);
-                    }
-                } else {
-                    setPredictedWord(rawClass);
-                    setConfidence(rawConfidence);
-                    setVariabel1(null);
-                    setVariabel2(null);
-                }
-            }
-        } catch (error) {
-            console.error("Gagal mengambil tangkapan layar penuh:", error);
-            // Pastikan kanvas sementara tetap dihapus jika terjadi error
-            const existingCanvas = document.getElementById("temp-camera-screenshot-canvas");
-            if (existingCanvas && existingCanvas.parentNode) {
-                existingCanvas.parentNode.removeChild(existingCanvas);
-            }
-        }
-    };
-
-    const handleStartTest = () => {
-        setIsStarted(true);
-        setCurrentIndex(0);
-        setCountdown(5);
-        setPredictedWord("-");
-        setConfidence(0);
-        setVariabel1(null);
-        setVariabel2(null);
-
-        runTestStep(0);
-    };
-
-    const runTestStep = (index: number) => {
-        if (index >= LIST_KATA.length) {
-            stopIntervals();
-            Swal.fire({
-                title: "Pengujian Selesai!",
-                text: "Seluruh kata uji telah berhasil diperagakan dan direkam.",
-                icon: "success",
-                confirmButtonColor: "#10b981",
-            }).then(() => {
-                router.push("/pengujian");
-            });
-            setIsStarted(false);
-            return;
-        }
-
-        let currentTimer = 5;
-        setCountdown(currentTimer);
-
-        countdownRef.current = setInterval(() => {
-            currentTimer -= 1;
-            setCountdown(currentTimer);
-
-            // Ambil screenshot tangkapan layar di detik terakhir (saat timer bernilai 1 menuju habis)
-            if (currentTimer === 1) {
-                captureAndSend(LIST_KATA[index]);
-            }
-
-            if (currentTimer <= 0) {
-                clearInterval(countdownRef.current!);
-                const nextIndex = index + 1;
-                setCurrentIndex(nextIndex);
-                runTestStep(nextIndex);
-            }
-        }, 1000);
-    };
 
     const currentWordLower = LIST_KATA[currentIndex] ? LIST_KATA[currentIndex].toLowerCase() : "";
 
@@ -381,17 +349,15 @@ function MulaiPengujianContent() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                {/* ================== SECTION KIRI: KAMERA & HASIL PREDIKSI ================== */}
+                {/* ================== SECTION KIRI: KAMERA & KATA HARUS DIPERAGAKAN ================== */}
                 <div className="lg:col-span-7 flex flex-col gap-6">
                     {/* Progress & Timer Indicator */}
                     <div className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm space-y-4">
                         <div className="flex justify-between items-center">
-                            {/* Posisi Kiri: Menampilkan Angka Progress Soal */}
                             <span className="text-sm font-bold text-emerald-800">
                                 {isStarted ? Math.min(currentIndex + 1, LIST_KATA.length) : 0} / {LIST_KATA.length} Kata
                             </span>
 
-                            {/* Posisi Kanan: Hanya Menampilkan Angka Timer Saja */}
                             {isStarted && (
                                 <span className="bg-red-600 text-white px-3 py-1 rounded-xl text-sm font-black tracking-wider animate-pulse">
                                     {countdown}s
@@ -427,7 +393,7 @@ function MulaiPengujianContent() {
                                     <h3 className="text-base font-bold text-slate-900 mb-2">Petunjuk & Langkah Pengujian</h3>
                                     <ul className="text-xs text-slate-600 text-left space-y-2 list-disc list-inside mb-4">
                                         <li>Setelah menekan tombol <strong>Mulai Pengujian</strong>, sistem langsung berjalan.</li>
-                                        <li>Setiap kata memiliki durasi waktu <strong>5 detik</strong> sebelum otomatis berpindah.</li>
+                                        <li>Setiap kata memiliki durasi waktu <strong>10 detik</strong> sebelum otomatis berpindah.</li>
                                         <li>Pastikan Anda fokus memperagakan gerakan isyarat sesuai instruksi.</li>
                                     </ul>
                                     <button
@@ -441,48 +407,29 @@ function MulaiPengujianContent() {
                         )}
                     </div>
 
-                    {/* Hasil Predict & Confidence */}
-                    <div className="bg-gradient-to-br from-slate-900 to-slate-950 p-6 rounded-3xl shadow-md text-white grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
-                        <div className="sm:border-r border-slate-800 sm:pr-6 space-y-1">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block">
-                                Hasil Prediksi Model
-                            </span>
-                            <p className="text-3xl font-bold text-emerald-400 truncate">
-                                {predictedWord}
-                            </p>
-                        </div>
-                        <div className="sm:pl-6 space-y-1">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block">
-                                Confidence Score
-                            </span>
-                            <div className="flex items-center gap-4">
-                                <p className="text-3xl font-bold text-amber-400">
-                                    {(confidence * 100).toFixed(1)}%
-                                </p>
-                                <div className="flex-grow bg-slate-800 h-3 rounded-full overflow-hidden hidden sm:block">
-                                    <div
-                                        className="bg-amber-400 h-full transition-all duration-300"
-                                        style={{ width: `${confidence * 100}%` }}
-                                    />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* ================== SECTION KANAN: KONTROL & PROGRESS ================== */}
-                <div className="lg:col-span-5 space-y-6">
-                    {/* Kata yang Harus Diperagakan */}
-                    <div className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm text-center">
-                        <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-1">
-                            Kata Yang Harus Diperagakan
+                    {/* Section Kata yang Harus Diperagakan (Dipindah ke bawah kamera) */}
+                    <div
+                        className={`p-6 rounded-3xl shadow-sm text-center border transition-colors duration-300 ${
+                            isSuccess
+                                ? "bg-emerald-500 border-emerald-600 text-white"
+                                : "bg-white border-slate-100 text-slate-900"
+                        }`}
+                    >
+                        <span
+                            className={`text-xs font-semibold uppercase tracking-wider block mb-1 ${
+                                isSuccess ? "text-emerald-100" : "text-slate-400"
+                            }`}
+                        >
+                            {isSuccess ? "Berhasil Terdeteksi!" : "Kata Yang Harus Diperagakan"}
                         </span>
-                        <h2 className="text-4xl font-extrabold text-slate-900 tracking-tight min-h-[3rem] flex items-center justify-center">
+                        <h2 className="text-4xl font-extrabold tracking-tight min-h-[3rem] flex items-center justify-center">
                             {isStarted && LIST_KATA[currentIndex] ? LIST_KATA[currentIndex] : "—"}
                         </h2>
                     </div>
+                </div>
 
-                    {/* Contoh Video/Gambar Instruksi */}
+                {/* ================== SECTION KANAN: PANDUAN GERAKAN ================== */}
+                <div className="lg:col-span-5 space-y-6">
                     <div className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm">
                         <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-3">
                             Panduan Gerakan Isyarat
@@ -491,7 +438,11 @@ function MulaiPengujianContent() {
                             {isStarted && LIST_KATA[currentIndex] ? (
                                 <video
                                     key={LIST_KATA[currentIndex]}
-                                    src={`/video/Kata/${currentWordLower}1.mp4`}
+                                    src={
+                                        currentWordLower === "a" || currentWordLower === "y"
+                                            ? `/video/Abjad/${currentWordLower}1.mp4`
+                                            : `/video/Kata/${currentWordLower}1.mp4`
+                                    }
                                     autoPlay
                                     loop
                                     muted
@@ -513,11 +464,13 @@ function MulaiPengujianContent() {
 
 export default function MulaiPengujianPage() {
     return (
-        <Suspense fallback={
-            <div className="flex items-center justify-center min-h-screen text-emerald-800 font-semibold">
-                Memuat Halaman Pengujian...
-            </div>
-        }>
+        <Suspense
+            fallback={
+                <div className="flex items-center justify-center min-h-screen text-emerald-800 font-semibold">
+                    Memuat Halaman Pengujian...
+                </div>
+            }
+        >
             <MulaiPengujianContent />
         </Suspense>
     );

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Inter } from "next/font/google";
+import Swal from "sweetalert2"; // 1. Impor SweetAlert2
 import "./globals.css";
 import {
   Sparkles,
@@ -15,6 +16,7 @@ import {
   LogIn,
   LogOut,
   Menu,
+  ChevronRight,
   X
 } from "lucide-react";
 
@@ -44,17 +46,42 @@ export default function RootLayout({
     }
   }, [pathname]);
 
+  // 2. Perbarui fungsi handleLogout
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    setUserSession(null);
-    router.push("/");
+    Swal.fire({
+      title: "Konfirmasi Logout",
+      text: "Apakah Anda yakin ingin keluar?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#059669", // Warna emerald-600 agar cocok dengan tema
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Ya, Logout",
+      cancelButtonText: "Batal"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // Hapus session
+        localStorage.removeItem("user");
+        setUserSession(null);
+
+        // Notifikasi Berhasil
+        Swal.fire({
+          title: "Berhasil!",
+          text: "Anda telah berhasil keluar.",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+
+        router.push("/");
+      }
+    });
   };
 
   const menuItems = [
     { name: "About", href: "/", icon: Info },
     { name: "Dictionary", href: "/dictionary", icon: BookOpen },
     { name: "Quizz", href: "/quizz", icon: HelpCircle },
-    // { name: "Testing", href: "/pengujian", icon: FlaskConical },
+    { name: "Testing", href: "/pengujian", icon: FlaskConical },
   ];
 
   const SidebarContent = () => (
@@ -97,20 +124,28 @@ export default function RootLayout({
       <div className="border-t border-emerald-700/40 pt-4">
         {userSession ? (
           <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-3 px-4 py-3 bg-emerald-800/40 rounded-xl border border-emerald-700/30">
-              <div className="p-1.5 bg-emerald-600 rounded-lg text-white">
-                <User size={18} />
+            <Link
+              href="/profile"
+              className="flex items-center justify-between px-4 py-3 bg-emerald-800/40 hover:bg-emerald-800/70 rounded-xl border border-emerald-700/30 hover:border-emerald-600/50 transition-all duration-200 group cursor-pointer"
+            >
+              <div className="flex items-center gap-3 overflow-hidden">
+                <div className="p-1.5 bg-emerald-600 group-hover:bg-emerald-500 rounded-lg text-white transition-colors shrink-0">
+                  <User size={18} />
+                </div>
+                <div className="overflow-hidden">
+                  <p className="text-xs text-emerald-300 font-medium">Signed in as</p>
+                  <p className="text-sm font-semibold text-white truncate">
+                    {userSession.username || userSession.email}
+                  </p>
+                </div>
               </div>
-              <div className="overflow-hidden">
-                <p className="text-xs text-emerald-300 font-medium">Signed in as</p>
-                <p className="text-sm font-semibold text-white truncate">
-                  {userSession.username || userSession.email}
-                </p>
-              </div>
-            </div>
+
+              {/* Indikator visual bahwa ini adalah tombol navigasi */}
+              <ChevronRight size={16} className="text-emerald-400 group-hover:translate-x-0.5 transition-transform shrink-0 ml-2" />
+            </Link>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-4 w-full px-4 py-3 rounded-xl text-red-200 hover:bg-red-900/30 hover:text-white transition-colors text-sm font-medium"
+              className="flex items-center gap-4 w-full px-4 py-3 rounded-xl text-red-200 hover:bg-red-900/30 hover:text-white transition-colors text-sm font-medium cursor-pointer"
             >
               <LogOut size={20} />
               <span>Sign Out</span>
