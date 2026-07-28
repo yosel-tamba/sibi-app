@@ -200,13 +200,11 @@ function MulaiPengujianContent() {
         stopIntervals();
 
         countdownRef.current = setInterval(async () => {
-            // Jika sudah terdeteksi berhasil, tidak perlu hitung mundur lagi
             if (isSuccessRef.current) return;
 
             currentTimer -= 1;
             setCountdown(currentTimer);
 
-            // Jika timer habis dan belum berhasil
             if (currentTimer <= 0) {
                 stopIntervals();
                 const targetWord = LIST_KATA[index];
@@ -299,15 +297,18 @@ function MulaiPengujianContent() {
                                     isSuccessRef.current = true;
                                     stopIntervals();
 
+                                    // Beri jeda 200ms agar DOM merender warna hijau sebelum diambil tangkapan layarnya
+                                    await new Promise((resolve) => setTimeout(resolve, 200));
+
                                     // Ambil tangkapan layar dengan status berhasil
                                     await captureAndSend(targetWord, "berhasil");
 
-                                    // Jeda singkat agar warna hijau terlihat sebelum pindah
+                                    // Sisa jeda sebelum berpindah ke kata berikutnya
                                     setTimeout(() => {
                                         const nextIndex = currentIndexRef.current + 1;
                                         setCurrentIndex(nextIndex);
                                         runTestStep(nextIndex);
-                                    }, 1200);
+                                    }, 1000);
                                 }
                             }
                         } catch (fetchError) {
@@ -407,7 +408,7 @@ function MulaiPengujianContent() {
                         )}
                     </div>
 
-                    {/* Section Kata yang Harus Diperagakan (Dipindah ke bawah kamera) */}
+                    {/* Section Kata yang Harus Diperagakan */}
                     <div
                         className={`p-6 rounded-3xl shadow-sm text-center border transition-colors duration-300 ${
                             isSuccess
