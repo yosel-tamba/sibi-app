@@ -471,6 +471,7 @@ export default function SusunKataQuizzPage() {
                                     playsInline
                                     className="w-full h-full object-cover"
                                 />
+                                
                                 <span className="absolute top-2 left-2 bg-black/60 text-[10px] font-bold text-white px-2 py-0.5 rounded-full backdrop-blur-sm">
                                     Video {index + 1}
                                 </span>
