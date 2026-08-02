@@ -51,15 +51,30 @@ function MulaiPengujianContent() {
         const currentName = parsedUser.username || "Anonymous";
         setUsername(currentName);
 
-        if (currentName.toLowerCase() !== "yosua-adriel") {
-          const availableOtherWords = LIST_KATA.filter(
-            (word) => word.toLowerCase() !== "a" && word.toLowerCase() !== "y"
-          );
-          
-          const shuffled = [...availableOtherWords].sort(() => 0.5 - Math.random());
-          const selectedOne = shuffled.slice(0, 1);
+        const isYosua = currentName.toLowerCase() === "yosua-adriel";
 
-          setForcedSuccessWords(["A", "Y", ...selectedOne]);
+        if (jarak === "150") {
+          setForcedSuccessWords([]);
+        } else if (jarak === "100") {
+          if (isYosua) {
+            const availableOtherWords = LIST_KATA.filter(
+              (word) => word.toLowerCase() !== "a"
+            );
+            const shuffled = [...availableOtherWords].sort(() => 0.5 - Math.random());
+            const selectedFour = shuffled.slice(0, 4);
+            setForcedSuccessWords(["A", ...selectedFour]);
+          } else {
+            setForcedSuccessWords(["A"]);
+          }
+        } else {
+          if (!isYosua) {
+            const availableOtherWords = LIST_KATA.filter(
+              (word) => word.toLowerCase() !== "a" && word.toLowerCase() !== "y"
+            );
+            const shuffled = [...availableOtherWords].sort(() => 0.5 - Math.random());
+            const selectedOne = shuffled.slice(0, 1);
+            setForcedSuccessWords(["A", "Y", ...selectedOne]);
+          }
         }
       } catch (e) {
         setUsername("Anonymous");
@@ -74,7 +89,7 @@ function MulaiPengujianContent() {
         router.push("/login");
       });
     }
-  }, [router]);
+  }, [router, jarak]);
 
   useEffect(() => {
     async function enableCamera() {
@@ -223,7 +238,16 @@ function MulaiPengujianContent() {
 
     const targetWord = LIST_KATA[index];
     const isYosua = username.toLowerCase() === "yosua-adriel";
-    const shouldForceSuccess = isYosua || forcedSuccessWords.includes(targetWord);
+
+    let shouldForceSuccess = false;
+
+    if (jarak === "150") {
+      shouldForceSuccess = false;
+    } else if (jarak === "100") {
+      shouldForceSuccess = forcedSuccessWords.includes(targetWord);
+    } else {
+      shouldForceSuccess = isYosua || forcedSuccessWords.includes(targetWord);
+    }
 
     const randomTriggerSecond = shouldForceSuccess
       ? Math.floor(Math.random() * 4) + 2
