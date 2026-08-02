@@ -325,9 +325,6 @@ export default function SusunKataQuizzPage() {
         return (
             <div className="max-w-3xl mx-auto px-4 py-12">
                 <div className="bg-white/75 backdrop-blur-md border border-slate-200/50 p-8 md:p-10 rounded-3xl shadow-xl text-center">
-                    <div className="w-20 h-20 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-                        <Layers size={40} className="animate-pulse" />
-                    </div>
 
                     <h1 className="text-3xl font-black text-slate-900 tracking-tight">Kuis Selesai!</h1>
                     <p className="text-slate-500 mt-2">Anda telah menyelesaikan sesi analisis visual susun kata.</p>
@@ -398,9 +395,6 @@ export default function SusunKataQuizzPage() {
                 </Link>
 
                 <div className="bg-white/75 backdrop-blur-md border border-slate-200/50 p-8 md:p-10 rounded-3xl shadow-sm text-center">
-                    <div className="w-16 h-16 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-600 mx-auto mb-6">
-                        <Layers size={32} />
-                    </div>
 
                     <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-4">
                         Susun Kata Isyarat SIBI

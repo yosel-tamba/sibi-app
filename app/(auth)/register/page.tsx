@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 import AuthCard from "@/components/auth/AuthCard";
@@ -8,9 +9,11 @@ import RegisterForm from "@/components/auth/RegisterForm";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
   const flaskUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   const handleGoogleRegister = async (response: any) => {
+    setIsLoading(true);
     try {
       const res = await fetch(`${flaskUrl}/register-google`, {
         method: "POST",
@@ -22,14 +25,24 @@ export default function RegisterPage() {
       });
 
       const data = await res.json();
-      if (res.ok) {
+      if (res.ok && data.user) {
+        // Otomatis Simpan Session User
+        const userSession = {
+          id: data.user.id || null,
+          username: data.user.username || "Google User",
+          email: data.user.email || "",
+        };
+        localStorage.setItem("user", JSON.stringify(userSession));
+
         await Swal.fire({
-          title: "Registrasi Berhasil!",
-          text: "Akun Google Anda telah terdaftar dan langsung aktif.",
+          title: data.is_existing ? "Selamat Datang Kembali!" : "Registrasi Berhasil!",
+          text: `Selamat datang, ${userSession.username}!`,
           icon: "success",
-          confirmButtonText: "Lanjutkan",
-          confirmButtonColor: "#10b981",
+          timer: 1500,
+          showConfirmButton: false,
         });
+
+        // Langsung Masuk ke App
         router.push("/");
       } else {
         Swal.fire({
@@ -46,10 +59,32 @@ export default function RegisterPage() {
         icon: "error",
         confirmButtonColor: "#10b981",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleManualRegister = async (name: string, password: string, confirmPassword: string) => {
+    if (!name.trim() || !password) {
+      Swal.fire({
+        title: "Input Tidak Lengkap",
+        text: "Semua kolom wajib diisi.",
+        icon: "warning",
+        confirmButtonColor: "#10b981",
+      });
+      return;
+    }
+
+    if (password.length < 6) {
+      Swal.fire({
+        title: "Password Terlalu Pendek",
+        text: "Password minimal terdiri dari 6 karakter.",
+        icon: "warning",
+        confirmButtonColor: "#10b981",
+      });
+      return;
+    }
+
     if (password !== confirmPassword) {
       Swal.fire({
         title: "Password Tidak Cocok",
@@ -59,6 +94,8 @@ export default function RegisterPage() {
       });
       return;
     }
+
+    setIsLoading(true);
 
     try {
       const response = await fetch(`${flaskUrl}/register`, {
@@ -71,19 +108,29 @@ export default function RegisterPage() {
       });
 
       const data = await response.json();
-      if (response.ok) {
+      if (response.ok && data.user) {
+        // Otomatis Simpan Session User
+        const userSession = {
+          id: data.user.id || null,
+          username: data.user.username || name,
+          email: data.user.email || "",
+        };
+        localStorage.setItem("user", JSON.stringify(userSession));
+
         await Swal.fire({
-          title: "Registrasi Berhasil!",
-          text: data.message || "Akun Anda telah dibuat. Silakan langsung login.",
+          title: data.is_existing ? "Selamat Datang Kembali!" : "Registrasi Berhasil!",
+          text: `Selamat datang, ${userSession.username}!`,
           icon: "success",
-          confirmButtonText: "Ke Halaman Login",
-          confirmButtonColor: "#10b981",
+          timer: 1500,
+          showConfirmButton: false,
         });
-        router.push("/login");
+
+        // Langsung Masuk ke App
+        router.push("/");
       } else {
         Swal.fire({
           title: "Registrasi Gagal",
-          text: data.message || "Gagal melakukan registrasi manual.",
+          text: data.error ? `${data.message}: ${data.error}` : (data.message || "Gagal melakukan registrasi manual."),
           icon: "error",
           confirmButtonColor: "#10b981",
         });
@@ -95,6 +142,8 @@ export default function RegisterPage() {
         icon: "error",
         confirmButtonColor: "#10b981",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 

@@ -261,9 +261,6 @@ export default function PilihanGandaQuizzPage() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12">
         <div className="bg-white/75 backdrop-blur-md border border-slate-200/50 p-8 md:p-10 rounded-3xl shadow-xl text-center">
-          <div className="w-20 h-20 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-            <HelpCircle size={40} className="animate-pulse" />
-          </div>
 
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Kuis Selesai!</h1>
           <p className="text-slate-500 mt-2">Evaluasi pengerjaan Anda telah terekam secara komprehensif.</p>
@@ -329,7 +326,6 @@ export default function PilihanGandaQuizzPage() {
     );
   }
 
-  // VIEW: HUB / TAMPILAN ATURAN AWAL SEBELUM MEMULAI KUIS
   if (!hasStarted) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12">
@@ -342,9 +338,6 @@ export default function PilihanGandaQuizzPage() {
         </Link>
 
         <div className="bg-white/75 backdrop-blur-md border border-slate-200/50 p-8 md:p-10 rounded-3xl shadow-sm text-center">
-          <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mx-auto mb-6">
-            <HelpCircle size={32} />
-          </div>
 
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-4">
             Kuis Pilihan Ganda SIBI

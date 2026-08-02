@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { ArrowLeft, Camera, RefreshCw, CheckCircle2, Play, Info, Timer, Award, XCircle, ChevronRight, ChevronLeft, RotateCcw } from "lucide-react";
+import { ArrowLeft, Camera, RefreshCw, CheckCircle2, Play, Info, Timer, XCircle, ChevronRight, ChevronLeft, RotateCcw } from "lucide-react";
 
 interface SoalPeragaan {
   id: number;
@@ -84,14 +84,14 @@ export default function PeragaanQuizzPage() {
         console.error("Gagal memuat kumpulan soal:", err);
         setLoading(false);
       });
-  }, []);
+  }, [flaskUrl]);
 
   // Sinkronisasi status deteksi ketika indeks soal berubah
   useEffect(() => {
     if (soalList.length > 0 && riwayat.length > 0) {
       const currentSave = riwayat[currentIndex];
       
-      // Reset buffer variabel sementara ketika berganti soal
+      // Reset buffer variabel sementara HANYA ketika berganti soal
       setVariabel1(null);
       setVariabel2(null);
 
@@ -335,36 +335,31 @@ export default function PeragaanQuizzPage() {
           const detectedClass = data.class;
           setConfidence(data.confidence);
 
-          // Gunakan Regular Expression untuk mengecek akhiran angka 1, 2, atau 3 (untuk Cepat3)
+          // Selalu tampilkan teks asli yang terdeteksi (misal: "Apa1", "Apa2")
+          setPrediction(detectedClass);
+
+          // Gunakan Regular Expression untuk mengecek akhiran angka 1, 2, atau 3 (untuk Suku Kata)
           const endsWithNumberMatch = detectedClass.match(/^(.*?)([1-3])$/);
 
           if (endsWithNumberMatch) {
-            const wordBase = endsWithNumberMatch[1]; // Suku kata dasar (misal: "Apa" dari "Apa1")
+            const wordBase = endsWithNumberMatch[1]; // Suku kata dasar (misal: "Apa")
             const numberSuffix = endsWithNumberMatch[2]; // Angka akhiran ("1", "2", atau "3")
 
-            let currentV1 = variabel1;
-            let currentV2 = variabel2;
+            // Validasi apakah gerakan yang terdeteksi cocok dengan keyword soal saat ini
+            if (wordBase.toLowerCase() === soalList[currentIndex]?.keyword.toLowerCase()) {
+              let currentV1 = variabel1;
+              let currentV2 = variabel2;
 
-            if (numberSuffix === "1") {
-              setVariabel1(wordBase);
-              currentV1 = wordBase;
-            } else if (numberSuffix === "2" || numberSuffix === "3") {
-              setVariabel2(wordBase);
-              currentV2 = wordBase;
-            }
+              if (numberSuffix === "1") {
+                setVariabel1(wordBase);
+                currentV1 = wordBase;
+              } else if (numberSuffix === "2" || numberSuffix === "3") {
+                setVariabel2(wordBase);
+                currentV2 = wordBase;
+              }
 
-            // Jika kedua variabel sementara sudah terisi dan memiliki kata dasar yang cocok/sama
-            if (currentV1 && currentV2 && currentV1.toLowerCase() === currentV2.toLowerCase()) {
-              const finalMergedWord = currentV1; // Kata gabungan bersih tanpa angka (misal: "Apa")
-
-              setPrediction(finalMergedWord);
-
-              // Reset buffer penampung
-              setVariabel1(null);
-              setVariabel2(null);
-
-              // Validasi kecocokan dengan keyword soal
-              if (finalMergedWord.toLowerCase() === soalList[currentIndex]?.keyword.toLowerCase()) {
+              // Jika kedua suku kata sudah berhasil terdeteksi
+              if (currentV1 && currentV2 && currentV1.toLowerCase() === currentV2.toLowerCase()) {
                 setIsMatched(true);
 
                 setRiwayat((prev) => {
@@ -381,12 +376,6 @@ export default function PeragaanQuizzPage() {
             }
           } else {
             // Jika kelas murni kata dasar yang tidak diakhiri angka (misal: "Saya", "Makan")
-            setPrediction(detectedClass);
-            
-            // Set variabel penampung kembali ke null karena gerakan non-angka bersifat mandiri
-            setVariabel1(null);
-            setVariabel2(null);
-
             if (detectedClass.toLowerCase() === soalList[currentIndex]?.keyword.toLowerCase()) {
               setIsMatched(true);
 
@@ -421,9 +410,6 @@ export default function PeragaanQuizzPage() {
     return (
       <div className="max-w-3xl mx-auto px-4 py-12">
         <div className="bg-white/75 backdrop-blur-md border border-slate-200/50 p-8 md:p-10 rounded-3xl shadow-xl text-center">
-          <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
-            <Award size={44} className="animate-pulse" />
-          </div>
 
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Kuis Selesai!</h1>
           <p className="text-slate-500 mt-2">Anda telah menyelesaikan sesi tantangan gerakan.</p>
@@ -498,9 +484,6 @@ export default function PeragaanQuizzPage() {
         </Link>
 
         <div className="bg-white/75 backdrop-blur-md border border-slate-200/50 p-8 md:p-10 rounded-3xl shadow-sm text-center">
-          <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mx-auto mb-6">
-            <Camera size={32} />
-          </div>
 
           <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mb-4">
             Tantangan Ekspresi Gerakan SIBI
@@ -597,29 +580,58 @@ export default function PeragaanQuizzPage() {
             </p>
 
             {/* Area Hasil Prediksi */}
-            <div className={`rounded-2xl p-6 border transition-all duration-300 flex items-center justify-between ${isMatched
-              ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-              : "bg-slate-50 border-slate-100 text-slate-800"
-              }`}>
-              <div>
-                <p className={`text-sm font-medium ${isMatched ? "text-emerald-600" : "text-slate-400"}`}>
-                  Hasil Deteksi AI:
-                </p>
-                <p className="text-2xl font-black mt-1 tracking-tight uppercase">
-                  {prediction}
-                </p>
-                {confidence !== null && !isMatched && (
-                  <p className="text-xs font-semibold opacity-60 mt-0.5">
-                    Tingkat Akurasi: {(confidence * 100).toFixed(1)}%
+            <div className={`rounded-2xl p-6 border transition-all duration-300 flex flex-col gap-4 ${
+              isMatched
+                ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                : (variabel1 || variabel2)
+                ? "bg-amber-50 border-amber-200 text-amber-900"
+                : "bg-slate-50 border-slate-100 text-slate-800"
+            }`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-sm font-medium ${
+                    isMatched ? "text-emerald-600" : (variabel1 || variabel2) ? "text-amber-600" : "text-slate-400"
+                  }`}>
+                    Hasil Deteksi AI:
                   </p>
-                )}
+                  <p className="text-2xl font-black mt-1 tracking-tight uppercase">
+                    {prediction}
+                  </p>
+                  {confidence !== null && !isMatched && (
+                    <p className="text-xs font-semibold opacity-60 mt-0.5">
+                      Tingkat Akurasi: {(confidence * 100).toFixed(1)}%
+                    </p>
+                  )}
+                </div>
+
+                <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0">
+                  {isMatched ? (
+                    <CheckCircle2 size={32} className="text-emerald-600" />
+                  ) : (
+                    <RefreshCw size={22} className="text-slate-400 animate-spin" />
+                  )}
+                </div>
               </div>
-              <div className="w-12 h-12 rounded-full flex items-center justify-center shrink-0">
-                {isMatched ? (
-                  <CheckCircle2 size={32} className="text-emerald-600" />
-                ) : (
-                  <RefreshCw size={22} className="text-slate-400 animate-spin" />
-                )}
+
+              {/* Visual Indikator Progress Suku Kata / Partisi */}
+              <div className="pt-2 border-t border-slate-200/50">
+                <div className="flex items-center justify-between text-xs font-bold mb-1.5 opacity-70">
+                  <span>Progress Gerakan Suku Kata:</span>
+                  <span>
+                    {isMatched ? "2 / 2 (Lengkap)" : (variabel1 || variabel2) ? "1 / 2 (Sebagian)" : "0 / 2"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {/* Indikator Suku Kata / Bagian 1 */}
+                  <div className={`h-2.5 rounded-full transition-all duration-500 ${
+                    variabel1 || isMatched ? "bg-emerald-500 shadow-sm" : "bg-slate-200"
+                  }`} />
+                  
+                  {/* Indikator Suku Kata / Bagian 2 */}
+                  <div className={`h-2.5 rounded-full transition-all duration-500 ${
+                    variabel2 || isMatched ? "bg-emerald-500 shadow-sm" : "bg-slate-200"
+                  }`} />
+                </div>
               </div>
             </div>
           </div>

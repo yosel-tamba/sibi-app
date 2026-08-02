@@ -30,10 +30,6 @@ export default function AboutPage() {
       {/* SECTION 1: HERO (Pengenalan SIBI & Visi Aksesibilitas) */}
       <section className="grid lg:grid-cols-12 gap-12 items-center">
         <div className="lg:col-span-7">
-          <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-800 px-4 py-2 rounded-full text-xs md:text-sm font-semibold border border-emerald-100">
-            <GraduationCap size={16} />
-            Edukasi Bahasa Isyarat Indonesia
-          </div>
 
           <h1 className="mt-6 text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight">
             Mengenal Lebih Dekat
@@ -58,15 +54,14 @@ export default function AboutPage() {
 
         {/* Hero Side Graphic: Kotak Edukasi / Quote Penting */}
         <div className="lg:col-span-5 bg-gradient-to-br from-emerald-800 to-emerald-950 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden group">
-          <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-          <MessageSquare size={40} className="text-emerald-300 opacity-80 mb-6" />
-          <h3 className="text-xl font-bold tracking-tight">"Bahasa isyarat bukan sekadar gerakan tangan, melainkan ekspresi pemikiran yang utuh."</h3>
-          <p className="mt-4 text-emerald-100/80 text-sm leading-relaxed">
-            Melalui pemahaman SIBI yang baik, kita mendukung standarisasi komunikasi formal yang inklusif baik di ranah pendidikan maupun instansi resmi.
-          </p>
+          <h3 className="text-xl font-bold tracking-tight">
+            "Belajar bahasa isyarat bukan cuma soal menghafal gerakan, tapi juga memahami cara berkomunikasi yang lebih inklusif."
+          </h3>
+
           <div className="mt-6 pt-6 border-t border-emerald-700/50 flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs text-emerald-200 font-medium uppercase tracking-wider">Kurikulum Resmi SIBI</span>
+            <p className="text-emerald-100/80 text-sm leading-relaxed">
+              Yuk, kenali SIBI dengan cara yang lebih interaktif. Semakin banyak orang yang memahami bahasa isyarat, semakin mudah kita membangun komunikasi yang terbuka untuk semua.
+            </p>
           </div>
         </div>
       </section>
@@ -148,30 +143,21 @@ export default function AboutPage() {
 
         <div className="grid md:grid-cols-3 gap-6">
           <div className="bg-white/80 border border-slate-100 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-3 bg-emerald-50 text-emerald-600 w-fit rounded-xl">
-              <Layers size={24} />
-            </div>
-            <h3 className="mt-4 text-lg font-bold text-slate-800">Mendukung Pendidikan Formal</h3>
+            <h3 className="mt-4 text-lg font-bold text-emerald-600">Mendukung Pendidikan Formal</h3>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
               Karena SIBI merupakan materi standardisasi dalam kurikulum SLB, mempelajarinya membantu menyelaraskan sistem edukasi nasional yang ramah disabilitas.
             </p>
           </div>
 
           <div className="bg-white/80 border border-slate-100 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-3 bg-emerald-50 text-emerald-600 w-fit rounded-xl">
-              <BookOpen size={24} />
-            </div>
-            <h3 className="mt-4 text-lg font-bold text-slate-800">Memperkaya Tata Bahasa</h3>
+            <h3 className="mt-4 text-lg font-bold text-emerald-600">Memperkaya Tata Bahasa</h3>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
               Struktur SIBI sejalan dengan PUEBI (Pedoman Umum Ejaan Bahasa Indonesia), melatih kita menyampaikan pesan isyarat dengan struktur kalimat baku yang rapi.
             </p>
           </div>
 
           <div className="bg-white/80 border border-slate-100 p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-            <div className="p-3 bg-emerald-50 text-emerald-600 w-fit rounded-xl">
-              <HelpCircle size={24} />
-            </div>
-            <h3 className="mt-4 text-lg font-bold text-slate-800">Membangun Empati Tinggi</h3>
+            <h3 className="mt-4 text-lg font-bold text-emerald-600">Membangun Empati Tinggi</h3>
             <p className="mt-2 text-sm text-slate-600 leading-relaxed">
               Belajar isyarat menumbuhkan rasa kepedulian sosial yang nyata, meruntuhkan batasan interaksi, dan menjadikan kita pribadi yang lebih inklusif.
             </p>

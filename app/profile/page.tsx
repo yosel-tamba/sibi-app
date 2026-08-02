@@ -542,9 +542,6 @@ export default function ProfilePage() {
                                                     <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-lg border border-emerald-200/60">
                                                         Percobaan ke-{group.attempt}
                                                     </span>
-                                                    <span className="text-xs font-medium text-slate-400 group-hover:text-emerald-600 transition flex items-center gap-1">
-                                                        Lihat <ChevronRight size={14} />
-                                                    </span>
                                                 </div>
 
                                                 <div>
@@ -564,7 +561,6 @@ export default function ProfilePage() {
                                                 <span className="flex items-center gap-1">
                                                     <FileText size={14} /> Buka Riwayat Evaluasi
                                                 </span>
-                                                <Eye size={16} className="text-emerald-600 group-hover:scale-110 transition-transform" />
                                             </div>
                                         </div>
                                     ))}

@@ -224,6 +224,7 @@ function MulaiPengujianContent() {
     };
 
     // Loop Prediksi Real-time
+    // Loop Prediksi Real-time
     useEffect(() => {
         let intervalId: NodeJS.Timeout;
 
@@ -262,48 +263,55 @@ function MulaiPengujianContent() {
                                 const rawClass = data.class || "-";
                                 const targetWord = LIST_KATA[currentIndexRef.current];
 
-                                let detectedWord = "";
+                                if (!targetWord) return;
 
+                                let isMatched = false;
                                 const endsWithNumberMatch = rawClass.match(/^(.*?)([1-3])$/);
+
                                 if (endsWithNumberMatch) {
                                     const wordBase = endsWithNumberMatch[1];
                                     const numberSuffix = endsWithNumberMatch[2];
 
-                                    let currentV1 = variabel1;
-                                    let currentV2 = variabel2;
+                                    // Cek apakah kata dasar cocok dengan target
+                                    if (wordBase.toLowerCase() === targetWord.toLowerCase()) {
+                                        if (numberSuffix === "1") {
+                                            setVariabel1(wordBase);
+                                        } else if (numberSuffix === "2" || numberSuffix === "3") {
+                                            setVariabel2(wordBase);
+                                        }
 
-                                    if (numberSuffix === "1") {
-                                        setVariabel1(wordBase);
-                                        currentV1 = wordBase;
-                                    } else if (numberSuffix === "2" || numberSuffix === "3") {
-                                        setVariabel2(wordBase);
-                                        currentV2 = wordBase;
-                                    }
+                                        // Cek apakah suku kata pendampingnya sudah ada atau jika suku kata saat ini melengkapi
+                                        setVariabel1((prevV1) => {
+                                            setVariabel2((prevV2) => {
+                                                const v1Val = numberSuffix === "1" ? wordBase : prevV1;
+                                                const v2Val = (numberSuffix === "2" || numberSuffix === "3") ? wordBase : prevV2;
 
-                                    if (currentV1 && currentV2 && currentV1.toLowerCase() === currentV2.toLowerCase()) {
-                                        detectedWord = currentV1;
+                                                if (v1Val && v2Val) {
+                                                    isMatched = true;
+                                                }
+                                                return prevV2;
+                                            });
+                                            return prevV1;
+                                        });
                                     }
                                 } else {
-                                    detectedWord = rawClass;
+                                    // Jika prediksi langsung mengembalikan kata utuh (misal "Minum" tanpa angka)
+                                    if (rawClass.toLowerCase() === targetWord.toLowerCase()) {
+                                        isMatched = true;
+                                    }
                                 }
 
-                                // Cek kesesuaian prediksi dengan kata target
-                                if (
-                                    detectedWord &&
-                                    targetWord &&
-                                    detectedWord.toLowerCase() === targetWord.toLowerCase()
-                                ) {
+                                // Eksekusi jika kata berhasil tertebak penuh
+                                if (isMatched && !isSuccessRef.current) {
                                     setIsSuccess(true);
                                     isSuccessRef.current = true;
                                     stopIntervals();
 
-                                    // Beri jeda 200ms agar DOM merender warna hijau sebelum diambil tangkapan layarnya
+                                    // Jeda sebentar untuk rendering warna hijau UI
                                     await new Promise((resolve) => setTimeout(resolve, 200));
 
-                                    // Ambil tangkapan layar dengan status berhasil
                                     await captureAndSend(targetWord, "berhasil");
 
-                                    // Sisa jeda sebelum berpindah ke kata berikutnya
                                     setTimeout(() => {
                                         const nextIndex = currentIndexRef.current + 1;
                                         setCurrentIndex(nextIndex);
@@ -328,9 +336,16 @@ function MulaiPengujianContent() {
         return () => {
             if (intervalId) clearInterval(intervalId);
         };
-    }, [isStarted, flaskUrl, variabel1, variabel2]);
+    }, [isStarted, flaskUrl]);
 
     const currentWordLower = LIST_KATA[currentIndex] ? LIST_KATA[currentIndex].toLowerCase() : "";
+
+    // Perhitungan persen progress indikator hijau per kata
+    const getSuccessProgressWidth = () => {
+        if (isSuccess) return "100%";
+        if (variabel1 || variabel2) return "50%";
+        return "0%";
+    };
 
     return (
         <div className="space-y-6 max-w-7xl mx-auto px-2">
@@ -352,28 +367,64 @@ function MulaiPengujianContent() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 {/* ================== SECTION KIRI: KAMERA & KATA HARUS DIPERAGAKAN ================== */}
                 <div className="lg:col-span-7 flex flex-col gap-6">
-                    {/* Progress & Timer Indicator */}
-                    <div className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm space-y-4">
-                        <div className="flex justify-between items-center">
-                            <span className="text-sm font-bold text-emerald-800">
-                                {isStarted ? Math.min(currentIndex + 1, LIST_KATA.length) : 0} / {LIST_KATA.length} Kata
-                            </span>
 
-                            {isStarted && (
-                                <span className="bg-red-600 text-white px-3 py-1 rounded-xl text-sm font-black tracking-wider animate-pulse">
-                                    {countdown}s
+                    {/* TOP BAR: Kata yang Harus Diperagakan & Progress (Sebelah-sebelahan di Atas Kamera) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Box Kata Yang Harus Diperagakan */}
+                        <div className="bg-white border border-slate-100 p-5 rounded-3xl shadow-sm relative overflow-hidden flex flex-col justify-center">
+                            {/* Layer Indikator Warna Hijau Bertahap (0%, 50%, 100%) */}
+                            <div
+                                className="absolute inset-y-0 left-0 bg-emerald-500 transition-all duration-500 ease-out"
+                                style={{ width: getSuccessProgressWidth() }}
+                            />
+
+                            <div className="relative z-10 text-center">
+                                <span
+                                    className={`text-xs font-semibold uppercase tracking-wider block mb-1 transition-colors ${isSuccess || variabel1 || variabel2 ? "text-emerald-950 font-bold" : "text-slate-400"
+                                        }`}
+                                >
+                                    {isSuccess
+                                        ? "Berhasil Terdeteksi!"
+                                        : variabel1 || variabel2
+                                            ? "Suku Kata Terdeteksi (1/2)"
+                                            : "Kata Yang Harus Diperagakan"}
                                 </span>
-                            )}
+                                <h2
+                                    className={`text-3xl font-extrabold tracking-tight transition-colors ${isSuccess
+                                            ? "text-white"
+                                            : variabel1 || variabel2
+                                                ? "text-emerald-950"
+                                                : "text-slate-900"
+                                        }`}
+                                >
+                                    {isStarted && LIST_KATA[currentIndex] ? LIST_KATA[currentIndex] : "—"}
+                                </h2>
+                            </div>
                         </div>
 
-                        {/* Progress Bar */}
-                        <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                            <div
-                                className="bg-emerald-600 h-full transition-all duration-300"
-                                style={{
-                                    width: `${(isStarted ? currentIndex / LIST_KATA.length : 0) * 100}%`,
-                                }}
-                            />
+                        {/* Box Progress Kata & Timer Indicator */}
+                        <div className="bg-white border border-slate-100 p-5 rounded-3xl shadow-sm flex flex-col justify-between gap-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-sm font-bold text-emerald-800">
+                                    {isStarted ? Math.min(currentIndex + 1, LIST_KATA.length) : 0} / {LIST_KATA.length} Kata
+                                </span>
+
+                                {isStarted && (
+                                    <span className="bg-red-600 text-white px-3 py-1 rounded-xl text-sm font-black tracking-wider animate-pulse">
+                                        {countdown}s
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Progress Bar Soal Uji */}
+                            <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                <div
+                                    className="bg-emerald-600 h-full transition-all duration-300"
+                                    style={{
+                                        width: `${(isStarted ? currentIndex / LIST_KATA.length : 0) * 100}%`,
+                                    }}
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -406,26 +457,6 @@ function MulaiPengujianContent() {
                                 </div>
                             </div>
                         )}
-                    </div>
-
-                    {/* Section Kata yang Harus Diperagakan */}
-                    <div
-                        className={`p-6 rounded-3xl shadow-sm text-center border transition-colors duration-300 ${
-                            isSuccess
-                                ? "bg-emerald-500 border-emerald-600 text-white"
-                                : "bg-white border-slate-100 text-slate-900"
-                        }`}
-                    >
-                        <span
-                            className={`text-xs font-semibold uppercase tracking-wider block mb-1 ${
-                                isSuccess ? "text-emerald-100" : "text-slate-400"
-                            }`}
-                        >
-                            {isSuccess ? "Berhasil Terdeteksi!" : "Kata Yang Harus Diperagakan"}
-                        </span>
-                        <h2 className="text-4xl font-extrabold tracking-tight min-h-[3rem] flex items-center justify-center">
-                            {isStarted && LIST_KATA[currentIndex] ? LIST_KATA[currentIndex] : "—"}
-                        </h2>
                     </div>
                 </div>
 

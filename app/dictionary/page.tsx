@@ -21,9 +21,6 @@ export default function PustakaIsyaratPage() {
         <Link href="/dictionary/abjad" className="group cursor-pointer">
           <div className="bg-white p-8 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-emerald-500/30 transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col justify-between">
             <div>
-              <div className="w-14 h-14 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
-                <BookOpen size={28} />
-              </div>
               <h2 className="text-2xl font-bold text-slate-800 tracking-tight group-hover:text-emerald-700 transition-colors">
                 Abjad Jari (Fingerspelling)
               </h2>
@@ -43,9 +40,6 @@ export default function PustakaIsyaratPage() {
         <Link href="/dictionary/kata" className="group cursor-pointer">
           <div className="bg-white p-8 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-xl hover:border-teal-500/30 transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col justify-between">
             <div>
-              <div className="w-14 h-14 bg-teal-50 rounded-xl flex items-center justify-center text-teal-600 mb-6 group-hover:bg-teal-600 group-hover:text-white transition-colors duration-300">
-                <Languages size={28} />
-              </div>
               <h2 className="text-2xl font-bold text-slate-800 tracking-tight group-hover:text-teal-700 transition-colors">
                 Kosakata Harian
               </h2>

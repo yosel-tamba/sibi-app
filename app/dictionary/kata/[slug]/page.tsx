@@ -29,10 +29,6 @@ export default async function DetailKataPage({
         
         {/* KOLOM KIRI: Bagian Teks & Informasi (Sekarang di dalam Card) */}
         <div className="flex flex-col items-start space-y-4 order-2 md:order-1">
-          <span className="inline-flex items-center gap-1.5 bg-teal-50 text-teal-700 px-3 py-1 rounded-md text-xs font-semibold border border-teal-100">
-            <Video size={14} />
-            Peragaan Isyarat Visual
-          </span>
           
           <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight capitalize">
             Peragaan Kata "{slug}"
