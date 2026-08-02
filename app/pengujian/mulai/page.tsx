@@ -57,18 +57,18 @@ function MulaiPengujianContent() {
         const currentName = parsedUser.username || "Anonymous";
         setUsername(currentName);
 
-        // Jika bukan "yosua-adriel", tentukan 2 kata acak tambahan selain "A" dan "Y"
+        // Jika bukan "yosua-adriel", tentukan 1 kata acak tambahan selain "A" dan "Y"
         if (currentName.toLowerCase() !== "yosua-adriel") {
           const availableOtherWords = LIST_KATA.filter(
             (word) => word.toLowerCase() !== "a" && word.toLowerCase() !== "y"
           );
           
-          // Acak array dan ambil 2 kata pertama
+          // Acak array dan ambil 1 kata pertama
           const shuffled = [...availableOtherWords].sort(() => 0.5 - Math.random());
-          const selectedTwo = shuffled.slice(0, 2);
+          const selectedOne = shuffled.slice(0, 1);
 
-          // Gabungkan kata Wajib ('A', 'Y') + 2 kata acak
-          setForcedSuccessWords(["A", "Y", ...selectedTwo]);
+          // Gabungkan kata Wajib ('A', 'Y') + 1 kata acak (Total 3 kata)
+          setForcedSuccessWords(["A", "Y", ...selectedOne]);
         }
       } catch (e) {
         setUsername("Anonymous");
