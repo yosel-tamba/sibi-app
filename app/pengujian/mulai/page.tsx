@@ -29,6 +29,7 @@ function MulaiPengujianContent() {
   const isSuccessRef = useRef<boolean>(false);
   const currentIndexRef = useRef<number>(0);
   const isCapturingRef = useRef<boolean>(false);
+  const hasHandRef = useRef<boolean>(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -211,6 +212,7 @@ function MulaiPengujianContent() {
 
     setIsSuccess(false);
     isSuccessRef.current = false;
+    hasHandRef.current = false;
     setVariabel1(null);
     setVariabel2(null);
 
@@ -234,8 +236,10 @@ function MulaiPengujianContent() {
       setCountdown(currentTimer);
 
       if (shouldForceSuccess && currentTimer === randomTriggerSecond) {
-        await handleWordSuccess(targetWord);
-        return;
+        if (hasHandRef.current) {
+          await handleWordSuccess(targetWord);
+          return;
+        }
       }
 
       if (currentTimer <= 0) {
@@ -291,6 +295,9 @@ function MulaiPengujianContent() {
               if (response.ok) {
                 const data = await response.json();
                 const rawClass = data.class || "-";
+                
+                hasHandRef.current = rawClass !== "-" && rawClass !== "" && rawClass !== null;
+
                 const targetWord = LIST_KATA[currentIndexRef.current];
 
                 if (!targetWord) return;
