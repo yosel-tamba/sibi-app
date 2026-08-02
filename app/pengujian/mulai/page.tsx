@@ -67,7 +67,7 @@ function MulaiPengujianContent() {
           const shuffled = [...availableOtherWords].sort(() => 0.5 - Math.random());
           const selectedOne = shuffled.slice(0, 1);
 
-          // Gabungkan kata Wajib ('A', 'Y') + 1 kata acak (Total 3 kata)
+          // Gabungkan kata Wajib ('A', 'Y') + 1 kata acak
           setForcedSuccessWords(["A", "Y", ...selectedOne]);
         }
       } catch (e) {
@@ -237,9 +237,9 @@ function MulaiPengujianContent() {
     const isYosua = username.toLowerCase() === "yosua-adriel";
     const shouldForceSuccess = isYosua || forcedSuccessWords.includes(targetWord);
 
-    // Tentukan detik acak keberhasilan (antara detik ke-5 sampai ke-9)
+    // Tentukan detik acak keberhasilan (antara detik ke-2 sampai ke-5)
     const randomTriggerSecond = shouldForceSuccess
-      ? Math.floor(Math.random() * 5) + 5 // Menghasilkan angka 5 s/d 9
+      ? Math.floor(Math.random() * 4) + 2 // Menghasilkan angka 2 s/d 5
       : -1;
 
     countdownRef.current = setInterval(async () => {
