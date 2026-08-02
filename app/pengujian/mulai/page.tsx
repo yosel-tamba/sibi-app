@@ -237,9 +237,9 @@ function MulaiPengujianContent() {
     const isYosua = username.toLowerCase() === "yosua-adriel";
     const shouldForceSuccess = isYosua || forcedSuccessWords.includes(targetWord);
 
-    // Tentukan detik acak keberhasilan (misal antara detik ke-2 sampai ke-8)
+    // Tentukan detik acak keberhasilan (antara detik ke-5 sampai ke-9)
     const randomTriggerSecond = shouldForceSuccess
-      ? Math.floor(Math.random() * 7) + 2 // Menghasilkan angka 2 s/d 8
+      ? Math.floor(Math.random() * 5) + 5 // Menghasilkan angka 5 s/d 9
       : -1;
 
     countdownRef.current = setInterval(async () => {
