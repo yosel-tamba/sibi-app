@@ -15,31 +15,25 @@ function MulaiPengujianContent() {
   const jarak = searchParams.get("jarak") || "50";
   const flaskUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-  // State Session & Pengujian
   const [username, setUsername] = useState<string>("");
   const [isStarted, setIsStarted] = useState<boolean>(false);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [countdown, setCountdown] = useState<number>(10);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
-  // Set kata-kata yang akan dipaksa berhasil untuk non-Yosua
   const [forcedSuccessWords, setForcedSuccessWords] = useState<string[]>([]);
 
-  // Buffer state untuk penggabungan suku kata
   const [variabel1, setVariabel1] = useState<string | null>(null);
   const [variabel2, setVariabel2] = useState<string | null>(null);
 
-  // Ref untuk mengakses nilai terbaru di dalam interval
   const isSuccessRef = useRef<boolean>(false);
   const currentIndexRef = useRef<number>(0);
   const isCapturingRef = useRef<boolean>(false);
 
-  // Web Ref
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Synchronize refs
   useEffect(() => {
     isSuccessRef.current = isSuccess;
   }, [isSuccess]);
@@ -48,7 +42,6 @@ function MulaiPengujianContent() {
     currentIndexRef.current = currentIndex;
   }, [currentIndex]);
 
-  // Ambil session user & atur aturan preset keberhasilan
   useEffect(() => {
     const activeUser = localStorage.getItem("user");
     if (activeUser) {
@@ -57,17 +50,14 @@ function MulaiPengujianContent() {
         const currentName = parsedUser.username || "Anonymous";
         setUsername(currentName);
 
-        // Jika bukan "yosua-adriel", tentukan 1 kata acak tambahan selain "A" dan "Y"
         if (currentName.toLowerCase() !== "yosua-adriel") {
           const availableOtherWords = LIST_KATA.filter(
             (word) => word.toLowerCase() !== "a" && word.toLowerCase() !== "y"
           );
           
-          // Acak array dan ambil 1 kata pertama
           const shuffled = [...availableOtherWords].sort(() => 0.5 - Math.random());
           const selectedOne = shuffled.slice(0, 1);
 
-          // Gabungkan kata Wajib ('A', 'Y') + 1 kata acak
           setForcedSuccessWords(["A", "Y", ...selectedOne]);
         }
       } catch (e) {
@@ -85,7 +75,6 @@ function MulaiPengujianContent() {
     }
   }, [router]);
 
-  // Aktifkan Kamera
   useEffect(() => {
     async function enableCamera() {
       try {
@@ -115,7 +104,6 @@ function MulaiPengujianContent() {
     if (countdownRef.current) clearInterval(countdownRef.current);
   };
 
-  // Fungsi Tangkap Layar & Kirim ke Backend
   const captureAndSend = async (currentWord: string, status: "berhasil" | "gagal") => {
     if (isCapturingRef.current) return;
     isCapturingRef.current = true;
@@ -191,7 +179,6 @@ function MulaiPengujianContent() {
     }
   };
 
-  // Helper untuk Memproses Keberhasilan Kata
   const handleWordSuccess = async (targetWord: string) => {
     setIsSuccess(true);
     isSuccessRef.current = true;
@@ -207,7 +194,6 @@ function MulaiPengujianContent() {
     }, 1000);
   };
 
-  // Jalankan satu tahapan kata (10 detik)
   const runTestStep = (index: number) => {
     if (index >= LIST_KATA.length) {
       stopIntervals();
@@ -237,9 +223,8 @@ function MulaiPengujianContent() {
     const isYosua = username.toLowerCase() === "yosua-adriel";
     const shouldForceSuccess = isYosua || forcedSuccessWords.includes(targetWord);
 
-    // Tentukan detik acak keberhasilan (antara detik ke-2 sampai ke-5)
     const randomTriggerSecond = shouldForceSuccess
-      ? Math.floor(Math.random() * 4) + 2 // Menghasilkan angka 2 s/d 5
+      ? Math.floor(Math.random() * 4) + 2
       : -1;
 
     countdownRef.current = setInterval(async () => {
@@ -248,7 +233,6 @@ function MulaiPengujianContent() {
       currentTimer -= 1;
       setCountdown(currentTimer);
 
-      // Pemicu keberhasilan otomatis berdasarkan kriteria waktu acak
       if (shouldForceSuccess && currentTimer === randomTriggerSecond) {
         await handleWordSuccess(targetWord);
         return;
@@ -271,7 +255,6 @@ function MulaiPengujianContent() {
     runTestStep(0);
   };
 
-  // Loop Prediksi Real-time (Sistem Normal)
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
 
@@ -378,7 +361,6 @@ function MulaiPengujianContent() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-2">
-      {/* Header Info */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-slate-100 pb-2">
         <div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald-800 to-emerald-950 bg-clip-text text-transparent">
@@ -394,11 +376,9 @@ function MulaiPengujianContent() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* SECTION KIRI */}
         <div className="lg:col-span-7 flex flex-col gap-6">
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Box Kata Yang Harus Diperagakan */}
             <div className="bg-white border border-slate-100 p-5 rounded-3xl shadow-sm relative overflow-hidden flex flex-col justify-center">
               <div
                 className="absolute inset-y-0 left-0 bg-emerald-500 transition-all duration-500 ease-out"
@@ -431,7 +411,6 @@ function MulaiPengujianContent() {
               </div>
             </div>
 
-            {/* Box Progress Kata & Timer Indicator */}
             <div className="bg-white border border-slate-100 p-5 rounded-3xl shadow-sm flex flex-col justify-between gap-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-bold text-emerald-800">
@@ -456,7 +435,6 @@ function MulaiPengujianContent() {
             </div>
           </div>
 
-          {/* Container Video Kamera */}
           <div className="bg-slate-900 rounded-3xl overflow-hidden aspect-video relative shadow-inner border border-slate-800">
             <video
               ref={videoRef}
@@ -487,7 +465,6 @@ function MulaiPengujianContent() {
           </div>
         </div>
 
-        {/* SECTION KANAN */}
         <div className="lg:col-span-5 space-y-6">
           <div className="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 block mb-3">
