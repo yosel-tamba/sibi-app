@@ -84,6 +84,34 @@ export default function RootLayout({
     // { name: "Testing", href: "/pengujian", icon: FlaskConical },
   ];
 
+  useEffect(() => {
+    const handleAnchorClick = (e: MouseEvent) => {
+      // Cari elemen <a> terdekat dari target yang diklik
+      const target = (e.target as HTMLElement).closest("a");
+
+      if (target && target.href) {
+        const targetUrl = new URL(target.href, window.location.origin);
+
+        // Pastikan link internal (bukan domain luar atau hash/anchor biasa)
+        if (
+          targetUrl.origin === window.location.origin &&
+          !targetUrl.hash &&
+          target.getAttribute("target") !== "_blank"
+        ) {
+          e.preventDefault(); // Hentikan SPA client-side routing dari Next.js
+          window.location.href = target.href; // Paksa hard reload browser
+        }
+      }
+    };
+
+    // Dengarkan semua klik secara global
+    document.addEventListener("click", handleAnchorClick);
+
+    return () => {
+      document.removeEventListener("click", handleAnchorClick);
+    };
+  }, []);
+
   const SidebarContent = () => (
     <div className="h-full flex flex-col justify-between py-8 px-4">
       <div className="text-center">
