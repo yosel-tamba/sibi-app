@@ -5,13 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  BookOpen,
-  GraduationCap,
-  Layers,
   CheckCircle2,
-  HelpCircle,
-  MessageSquare,
-  AlertCircle
 } from "lucide-react";
 
 export default function AboutPage() {
@@ -27,7 +21,7 @@ export default function AboutPage() {
   return (
     <div className="space-y-24 py-6 animate-in fade-in duration-500">
 
-      {/* SECTION 1: HERO (Pengenalan SIBI & Visi Aksesibilitas) */}
+      {/* SECTION 1: HERO */}
       <section className="grid lg:grid-cols-12 gap-12 items-center">
         <div className="lg:col-span-7">
 
