@@ -80,7 +80,7 @@ export default function RootLayout({
   const menuItems = [
     { name: "About", href: "/", icon: Info },
     { name: "Dictionary", href: "/dictionary", icon: BookOpen },
-    { name: "Kuis", href: "/quizz", icon: HelpCircle },
+    { name: "Quiz", href: "/quizz", icon: HelpCircle },
     // { name: "Testing", href: "/pengujian", icon: FlaskConical },
   ];
 
